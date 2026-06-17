@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="sw" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>STORIKA - Jukwaa la Kusoma Hadithi</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
+  <meta name="description" content="STORIKA - Jukwaa la Kusoma Hadithi kwa Kiswahili">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root { --font: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; }
+
+    /* ─── HERO ─── */
+    .hero-modern {
+      position: relative;
+      background: linear-gradient(135deg, #0A2342 0%, #1a3a6a 40%, #2d1b69 100%);
+      padding: 80px 0 100px;
+      text-align: center;
+      color: #fff;
+      overflow: hidden;
+    }
+    .hero-modern::before {
+      content: '';
+      position: absolute;
+      top: -50%; left: -20%;
+      width: 800px; height: 800px;
+      background: radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 60%);
+      border-radius: 50%;
+      animation: heroFloat 20s ease-in-out infinite;
+    }
+    .hero-modern::after {
+      content: '';
+      position: absolute;
+      bottom: -30%; right: -10%;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 60%);
+      border-radius: 50%;
+      animation: heroFloat 25s ease-in-out infinite reverse;
+    }
+    @keyframes heroFloat {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(30px, -30px) scale(1.05); }
+      66% { transform: translate(-20px, 20px) scale(0.95); }
+    }
+    .hero-modern .hero-content { position: relative; z-index: 1; }
+    .hero-modern .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(212,175,55,0.15);
+      border: 1px solid rgba(212,175,55,0.3);
+      padding: 6px 16px;
+      border-radius: 50px;
+      font-size: 12px; font-weight: 600; color: var(--secondary);
+      margin-bottom: 24px;
+    }
+    .hero-modern h1 {
+      font-size: 3.2rem; font-weight: 900;
+      line-height: 1.15; margin-bottom: 16px;
+      letter-spacing: -1px;
+    }
+    .hero-modern h1 span { color: var(--secondary); }
+    .hero-modern .hero-sub {
+      font-size: 1.15rem; opacity: 0.85;
+      max-width: 560px; margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* ─── STORY GRID ─── */
+    .story-grid-modern {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    .story-card-modern {
+      background: var(--card-bg);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid var(--border);
+      position: relative;
+      cursor: pointer;
+    }
+    .story-card-modern:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-hover);
+    }
+    .story-card-modern .card-badge {
+      position: absolute; top: 12px; right: 12px; z-index: 2;
+      display: flex; flex-direction: column; gap: 6px; align-items: flex-end;
+    }
+    .story-card-modern .card-badge span {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 50px;
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .story-card-modern .card-badge .badge-new {
+      background: linear-gradient(135deg, #D4AF37, #f5d06a);
+      color: #0A2342;
+      box-shadow: 0 4px 12px rgba(212,175,55,0.3);
+    }
+    .story-card-modern .card-badge .badge-series {
+      background: rgba(79,172,254,0.9);
+      color: #fff;
+    }
+    .story-card-modern .card-cover {
+      width: 100%;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+      background: var(--bg-alt);
+      transition: transform 0.5s ease;
+    }
+    .story-card-modern:hover .card-cover { transform: scale(1.05); }
+    .story-card-modern .card-body { padding: 20px; }
+    .story-card-modern .card-title {
+      font-size: 1.1rem; font-weight: 700;
+      margin-bottom: 6px; color: var(--text);
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .story-card-modern .card-meta {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 12px; color: var(--text-light); margin-bottom: 10px;
+    }
+    .story-card-modern .card-desc {
+      font-size: 13px; color: var(--text-light);
+      margin-bottom: 16px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+      line-height: 1.6;
+    }
+    .story-card-modern .card-foot {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .story-card-modern .card-author {
+      font-size: 12px; color: var(--text-light);
+    }
+    .story-card-modern .card-author strong { color: var(--secondary); }
+
+    /* ─── SECTION TITLE ─── */
+    .section-modern {
+      padding: 50px 0 10px;
+    }
+    .section-modern .section-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .section-modern .section-head h2 {
+      font-size: 1.6rem; font-weight: 800; color: var(--text);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-modern .section-head h2::after {
+      content: ''; flex: 1; height: 2px;
+      background: linear-gradient(to right, var(--secondary), transparent);
+      margin-left: 12px;
+    }
+    .section-modern .section-count {
+      font-size: 13px; color: var(--text-light); font-weight: 500;
+    }
+
+    /* ─── EMPTY ─── */
+    .empty-modern {
+      text-align: center; padding: 80px 20px;
+    }
+    .empty-modern .empty-icon { font-size: 72px; margin-bottom: 16px; opacity: 0.4; }
+    .empty-modern h3 { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    .empty-modern p { color: var(--text-light); font-size: 14px; }
+
+    /* ─── STORY DETAIL ─── */
+    .detail-modern { padding: 0; }
+    .detail-modern .detail-header {
+      background: linear-gradient(135deg, #0A2342 0%, #1a3a6a 50%, #2d1b69 100%);
+      padding: 60px 0 50px;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .detail-modern .detail-header::before {
+      content: '';
+      position: absolute;
+      top: -30%; right: -10%;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 60%);
+      border-radius: 50%;
+    }
+    .detail-modern .detail-header .dh-inner {
+      position: relative; z-index: 1;
+      display: flex; gap: 32px; align-items: flex-start;
+      max-width: 900px; margin: 0 auto; padding: 0 20px;
+    }
+    .detail-modern .detail-header .dh-cover {
+      width: 200px; height: 300px;
+      border-radius: 16px; object-fit: cover;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      flex-shrink: 0;
+    }
+    .detail-modern .detail-header .dh-info { flex: 1; }
+    .detail-modern .detail-header .dh-info h1 {
+      font-size: 2rem; font-weight: 900; line-height: 1.2; margin-bottom: 8px;
+    }
+    .detail-modern .detail-header .dh-info .dh-meta {
+      display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+      font-size: 14px; opacity: 0.8; margin-bottom: 16px;
+    }
+    .detail-modern .detail-header .dh-info .dh-meta .dh-type {
+      background: rgba(212,175,55,0.2);
+      color: var(--secondary);
+      padding: 2px 12px; border-radius: 20px;
+      font-size: 12px; font-weight: 700;
+    }
+    .detail-modern .detail-body {
+      max-width: 800px; margin: 0 auto; padding: 40px 20px 60px;
+    }
+    .detail-modern .detail-body .story-content {
+      font-size: 1.15rem; line-height: 2; color: var(--text);
+    }
+    .detail-modern .detail-body .story-content p { margin-bottom: 1.5rem; }
+
+    /* ─── EPISODES ─── */
+    .episode-modern {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      background: var(--card-bg);
+      transition: all 0.3s ease;
+    }
+    .episode-modern:hover { border-color: var(--secondary); }
+    .episode-modern .ep-head {
+      padding: 16px 20px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text);
+      transition: all 0.3s ease;
+      user-select: none;
+    }
+    .episode-modern .ep-head:hover { background: var(--bg-alt); }
+    .episode-modern .ep-head .ep-left {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .episode-modern .ep-head .ep-num {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: var(--secondary); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 800; flex-shrink: 0;
+    }
+    .episode-modern .ep-head .ep-arrow {
+      font-size: 12px; color: var(--text-light);
+      transition: transform 0.3s ease;
+    }
+    .episode-modern .ep-head .ep-arrow.open { transform: rotate(180deg); }
+    .episode-modern .ep-body {
+      display: none;
+      padding: 0 20px 20px;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: var(--text);
+      animation: fadeIn 0.3s ease;
+    }
+
+    /* ─── CHAPTER NAV ─── */
+    .chapter-nav-modern {
+      display: flex; justify-content: space-between; gap: 16px;
+      margin: 40px 0; max-width: 800px; margin-left: auto; margin-right: auto;
+    }
+    .btn-chapter-modern {
+      padding: 14px 28px;
+      background: var(--card-bg);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      color: var(--text);
+      font-weight: 600; font-size: 14px;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-chapter-modern:hover {
+      border-color: var(--secondary);
+      color: var(--secondary);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(212,175,55,0.1);
+    }
+    .btn-chapter-modern.disabled {
+      opacity: 0.3; pointer-events: none;
+    }
+
+    /* ─── COMMENTS ─── */
+    .comments-modern {
+      max-width: 800px; margin: 0 auto;
+      padding: 40px 20px;
+    }
+    .comments-modern .cm-title {
+      font-size: 1.3rem; font-weight: 700; margin-bottom: 24px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .comments-modern .cm-title .cm-count {
+      font-size: 13px; font-weight: 600; color: var(--text-light);
+      background: var(--bg-alt); padding: 2px 10px; border-radius: 20px;
+    }
+    .comments-modern .cm-form {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 28px;
+      box-shadow: var(--shadow-soft);
+    }
+    .comments-modern .cm-form .cm-input-row {
+      display: flex; gap: 12px; margin-bottom: 12px;
+    }
+    .comments-modern .cm-form input {
+      flex: 1;
+      padding: 12px 16px;
+      background: var(--bg-alt);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 14px;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+    .comments-modern .cm-form input:focus,
+    .comments-modern .cm-form textarea:focus {
+      border-color: var(--secondary);
+      background: var(--card-bg);
+      box-shadow: 0 0 0 4px rgba(212,175,55,0.1);
+    }
+    .comments-modern .cm-form textarea {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--bg-alt);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 14px;
+      min-height: 80px;
+      resize: vertical;
+      transition: all 0.3s ease;
+      font-family: inherit;
+      margin-bottom: 12px;
+    }
+    .comments-modern .cm-form .btn-submit {
+      padding: 12px 28px;
+      background: var(--gradient-primary);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .comments-modern .cm-form .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(10,35,66,0.2);
+    }
+    .comments-modern .cm-list { display: flex; flex-direction: column; gap: 12px; }
+    .comments-modern .cm-item {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      transition: all 0.3s ease;
+    }
+    .comments-modern .cm-item:hover { box-shadow: var(--shadow-soft); }
+    .comments-modern .cm-item .cm-author {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+    }
+    .comments-modern .cm-item .cm-avatar {
+      width: 32px; height: 32px; border-radius: 10px;
+      background: linear-gradient(135deg, #D4AF37, #f5d06a);
+      color: #0A2342;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 13px;
+      flex-shrink: 0;
+    }
+    .comments-modern .cm-item .cm-name { font-weight: 600; font-size: 14px; }
+    .comments-modern .cm-item .cm-date { font-size: 12px; color: var(--text-light); }
+    .comments-modern .cm-item .cm-text { font-size: 14px; line-height: 1.6; color: var(--text); }
+
+    /* ─── HEADER GLASS ─── */
+    .header-glass {
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    [data-theme="dark"] .header-glass {
+      background: rgba(15,20,25,0.8);
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media(max-width: 768px) {
+      .hero-modern { padding: 60px 0 70px; }
+      .hero-modern h1 { font-size: 2rem; }
+      .hero-modern .hero-sub { font-size: 1rem; }
+      .hero-modern .hero-stats { gap: 24px; }
+      .detail-modern .detail-header .dh-inner { flex-direction: column; align-items: center; text-align: center; }
+      .detail-modern .detail-header .dh-cover { width: 160px; height: 240px; }
+      .detail-modern .detail-header .dh-info h1 { font-size: 1.5rem; }
+      .detail-modern .detail-header .dh-info .dh-meta { justify-content: center; }
+      .chapter-nav-modern { flex-direction: column; }
+      .btn-chapter-modern { justify-content: center; }
+      .comments-modern .cm-form .cm-input-row { flex-direction: column; }
+      .story-grid-modern { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+      .section-modern .section-head h2 { font-size: 1.3rem; }
+    }
+    @media(max-width: 480px) {
+      .hero-modern h1 { font-size: 1.6rem; }
+      .story-grid-modern { grid-template-columns: 1fr; }
+      .detail-modern .detail-body { padding: 24px 16px 40px; }
+      .detail-modern .detail-body .story-content { font-size: 1.05rem; }
+    }
+
+    /* ─── PAYMENT MODAL ─── */
+    .pay-modal .modal-card {
+      max-width: 440px;
+      max-height: 90vh;
+      text-align: center;
+      background: linear-gradient(145deg, var(--card-bg) 0%, var(--bg) 100%);
+      border: 1px solid var(--border);
+      position: relative;
+      overflow-y: auto;
+    }
+    .pay-modal .modal-card > .modal-bg {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle at 30% 20%, rgba(212,175,55,0.04) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .pay-modal .pay-top {
+      position: relative;
+      background: linear-gradient(135deg, #0A2342 0%, #1a3a6a 50%, #2d1b69 100%);
+      margin: -32px -32px 24px;
+      padding: 28px 32px 24px;
+      border-radius: 20px 20px 0 0;
+      color: #fff;
+      overflow: hidden;
+    }
+    .pay-modal .pay-top::before {
+      content: '';
+      position: absolute;
+      top: -40%; right: -20%;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(212,175,55,0.1) 0%, transparent 60%);
+      border-radius: 50%;
+    }
+    .pay-modal .pay-top::after {
+      content: '';
+      position: absolute;
+      bottom: -20%; left: -10%;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 60%);
+      border-radius: 50%;
+    }
+    .pay-modal .pay-top .pay-icon-wrap {
+      width: 56px; height: 56px;
+      background: rgba(212,175,55,0.2);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 12px;
+      font-size: 28px;
+      position: relative;
+    }
+    .pay-modal .pay-top h3 {
+      font-size: 18px; font-weight: 700; margin-bottom: 4px; color: #fff;
+    }
+    .pay-modal .pay-top .pay-sub {
+      font-size: 13px; opacity: 0.7; margin-bottom: 8px;
+    }
+    .pay-modal .pay-top .pay-amount-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 16px;
+      padding: 10px 24px;
+      margin-top: 4px;
+    }
+    .pay-modal .pay-top .pay-amount-wrap .pay-amount {
+      font-size: 28px; font-weight: 900; color: var(--secondary);
+      letter-spacing: -0.5px;
+    }
+    .pay-modal .pay-top .pay-amount-wrap .pay-currency {
+      font-size: 13px; opacity: 0.6; font-weight: 500;
+    }
+    .pay-modal .pay-secure-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px; color: rgba(255,255,255,0.5);
+      margin-top: 12px;
+    }
+    .pay-modal .pay-body { position: relative; padding: 0 4px; }
+
+    .pay-modal .pay-label {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      color: var(--text-light);
+      margin-bottom: 10px;
+    }
+    .pay-modal .pay-label .label-line {
+      flex: 1; height: 1px;
+      background: linear-gradient(to right, var(--border), transparent);
+    }
+
+    .pay-modal .pay-network-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 18px;
+    }
+    .pay-modal .pay-network-btn {
+      padding: 10px 8px;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text);
+      font-size: 12px; font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+      font-family: inherit;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+    .pay-modal .pay-network-btn .net-icon { font-size: 22px; line-height: 1; }
+    .pay-modal .pay-network-btn .net-name { font-size: 11px; }
+    .pay-modal .pay-network-btn .net-check {
+      position: absolute; top: 6px; right: 6px;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--secondary);
+      color: #fff;
+      font-size: 9px;
+      display: none;
+      align-items: center; justify-content: center;
+    }
+    .pay-modal .pay-network-btn.active {
+      border-color: var(--secondary);
+      background: rgba(212,175,55,0.06);
+      box-shadow: 0 0 0 3px rgba(212,175,55,0.1);
+    }
+    .pay-modal .pay-network-btn.active .net-check { display: flex; }
+    .pay-modal .pay-network-btn:hover:not(.active) {
+      border-color: var(--secondary);
+      transform: translateY(-1px);
+    }
+
+    .pay-modal .pay-phone-wrap {
+      position: relative;
+      margin-bottom: 14px;
+    }
+    .pay-modal .pay-phone-wrap .pay-prefix {
+      position: absolute;
+      left: 14px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px; font-weight: 700;
+      color: var(--text-light);
+      pointer-events: none;
+    }
+    .pay-modal .pay-phone-input {
+      width: 100%;
+      padding: 14px 14px 14px 48px;
+      background: var(--bg-alt);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      color: var(--text);
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      font-family: inherit;
+      transition: all 0.3s ease;
+    }
+    .pay-modal .pay-phone-input:focus {
+      border-color: var(--secondary);
+      background: var(--card-bg);
+      box-shadow: 0 0 0 4px rgba(212,175,55,0.1);
+    }
+    .pay-modal .pay-phone-input::placeholder {
+      font-weight: 400;
+      letter-spacing: 0;
+      font-size: 14px;
+    }
+
+    .pay-modal .btn-pay {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #D4AF37 0%, #f5d06a 100%);
+      color: #0A2342;
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(212,175,55,0.3);
+    }
+    .pay-modal .btn-pay:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(212,175,55,0.4);
+    }
+    .pay-modal .btn-pay:active { transform: translateY(0) scale(0.98); }
+
+    .pay-modal .btn-cancel {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      background: transparent;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      color: var(--text-light);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+    .pay-modal .btn-cancel:hover {
+      border-color: var(--text-light);
+      color: var(--text);
+    }
+
+    /* Step 2 */
+    .pay-modal .pay-step2-anim {
+      animation: payStepIn 0.4s ease;
+    }
+    @keyframes payStepIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .pay-modal .pay-pulse-ring {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #D4AF37 0%, #f5d06a 100%);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 32px;
+      position: relative;
+      box-shadow: 0 0 0 0 rgba(212,175,55,0.5);
+      animation: pulseRing 2s infinite;
+    }
+    @keyframes pulseRing {
+      0% { box-shadow: 0 0 0 0 rgba(212,175,55,0.5); }
+      70% { box-shadow: 0 0 0 20px rgba(212,175,55,0); }
+      100% { box-shadow: 0 0 0 0 rgba(212,175,55,0); }
+    }
+    .pay-modal .pay-progress {
+      display: flex; justify-content: center; gap: 8px;
+      margin: 20px 0;
+    }
+    .pay-modal .pay-progress .p-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--border);
+      transition: all 0.5s ease;
+    }
+    .pay-modal .pay-progress .p-dot.active { background: var(--secondary); width: 24px; border-radius: 4px; }
+    .pay-modal .pay-progress .p-dot.done { background: #28a745; }
+
+    .pay-modal .pay-info-box {
+      background: linear-gradient(135deg, var(--bg-alt) 0%, var(--card-bg) 100%);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin: 16px 0;
+      font-size: 13px;
+      color: var(--text-light);
+      line-height: 1.7;
+      text-align: left;
+    }
+    .pay-modal .pay-info-box strong { color: var(--text); }
+    .pay-modal .pay-info-box .info-icon {
+      display: inline-block; margin-right: 6px;
+    }
+
+    .pay-modal .btn-result {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .pay-modal .btn-result.success {
+      background: linear-gradient(135deg, #28a745, #20c997);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(40,167,69,0.3);
+    }
+    .pay-modal .btn-result.success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(40,167,69,0.4);
+    }
+    .pay-modal .btn-result.danger {
+      background: linear-gradient(135deg, #dc3545, #e74c3c);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(220,53,69,0.3);
+    }
+    .pay-modal .btn-result.danger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(220,53,69,0.4);
+    }
+
+    .pay-modal .pay-timer {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-light);
+      background: var(--bg-alt);
+      padding: 6px 14px;
+      border-radius: 50px;
+      margin-bottom: 16px;
+    }
+    .pay-modal .pay-timer .timer-num {
+      font-weight: 800;
+      color: var(--text);
+      min-width: 20px;
+    }
+
+    .pay-modal .pay-error {
+      color: #dc3545;
+      font-size: 13px;
+      text-align: center;
+      margin-bottom: 10px;
+      display: none;
+      background: rgba(220,53,69,0.08);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+    [data-theme="dark"] .pay-modal .pay-top {
+      background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 50%, #162033 100%);
+    }
+    [data-theme="dark"] .pay-modal .modal-card::before {
+      background: radial-gradient(circle at 30% 20%, rgba(212,175,55,0.08) 0%, transparent 60%);
+    }
+
+    /* ─── CUSTOM SCROLLBAR ─── */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 10px;
+      border: 2px solid var(--bg);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--secondary);
+    }
+    .modal-card {
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    .modal-card::-webkit-scrollbar {
+      width: 6px;
+    }
+    .modal-card::-webkit-scrollbar-thumb {
+      border-width: 0;
+    }
+    .admin-sidebar-nav {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.15) transparent;
+    }
+    .admin-sidebar-nav::-webkit-scrollbar {
+      width: 4px;
+    }
+    .admin-sidebar-nav::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.15);
+      border-radius: 10px;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Header -->
+  <header class="header header-glass" id="mainHeader">
+    <div class="container">
+      <a href="#/" class="logo" style="display:flex;align-items:center;gap:10px;"><img src="images/logo.png" alt="STORIKA" style="height:42px;width:42px;border-radius:50%;object-fit:cover;">STO<span>RIKA</span></a>
+      <div class="search-bar" id="searchBar">
+        <span class="search-icon">&#128269;</span>
+        <input type="text" id="searchInput" placeholder="Tafuta hadithi..." autocomplete="off">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <div class="header-right">
+        <button class="theme-toggle" id="themeToggle" title="Badilisha mwonekano">&#9790;</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav class="nav" id="mainNav" style="display:none;">
+    <div class="container">
+      <a href="#/" data-nav="/">Nyumbani</a>
+    </div>
+  </nav>
+
+  <!-- Page Content -->
+  <main id="mainContent"></main>
+
+  <!-- Footer -->
+  <footer class="footer" id="mainFooter">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <h3>STORIKA</h3>
+          <p>Jukwaa la kusoma hadithi za Kiswahili. Soma hadithi za kipekee, zilizoandikwa kwa lugha ya Kiswahili sanifu.</p>
+        </div>
+        <div>
+          <h3>Kurasa</h3>
+          <a href="#/">Nyumbani</a>
+        </div>
+        <div>
+          <h3>Wasiliana</h3>
+          <p>Barua Pepe: info@storika.co.tz</p>
+          <p>Simu: +255 712 345 678</p>
+          <p>Soma, Jifunze, Burudika</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 STORIKA. Haki zote zimehifadhiwa.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- Payment Modal -->
+<div class="modal-modern pay-modal" id="paymentModal">
+  <div class="modal-card">
+    <div class="modal-bg"></div>
+    <!-- Step 1: Payment form -->
+    <div id="payStep1" class="pay-step2-anim">
+      <div class="pay-top">
+        <div class="pay-icon-wrap">&#128722;</div>
+        <h3>Fungua Hadithi Yako</h3>
+        <p class="pay-sub">Malipo ya wakati mmoja, soma hadithi kamili</p>
+        <div class="pay-amount-wrap">
+          <span class="pay-currency">TSh</span>
+          <span class="pay-amount">1,000</span>
+        </div>
+        <div class="pay-secure-badge">&#128274; Malipo salama na yaliyolindwa</div>
+      </div>
+
+      <div class="pay-body">
+        <form id="paymentForm">
+          <div class="pay-label"><span>Chagua mtandao wako</span><span class="label-line"></span></div>
+          <div class="pay-network-grid" id="networkOptions">
+            <button type="button" class="pay-network-btn active" data-network="mpesa">
+              <span class="net-check">&#10003;</span>
+              <span class="net-icon">&#128179;</span>
+              <span class="net-name">M-Pesa</span>
+            </button>
+            <button type="button" class="pay-network-btn" data-network="tigo">
+              <span class="net-check">&#10003;</span>
+              <span class="net-icon">&#128179;</span>
+              <span class="net-name">Tigo Pesa</span>
+            </button>
+            <button type="button" class="pay-network-btn" data-network="airtel">
+              <span class="net-check">&#10003;</span>
+              <span class="net-icon">&#128179;</span>
+              <span class="net-name">Airtel Money</span>
+            </button>
+            <button type="button" class="pay-network-btn" data-network="halotel">
+              <span class="net-check">&#10003;</span>
+              <span class="net-icon">&#128179;</span>
+              <span class="net-name">Halopesa</span>
+            </button>
+          </div>
+
+          <div class="pay-label"><span>Namba ya simu</span><span class="label-line"></span></div>
+          <div class="pay-phone-wrap">
+            <span class="pay-prefix">+255</span>
+            <input type="tel" id="phoneInput" class="pay-phone-input" placeholder="712 345 678" required>
+          </div>
+
+          <div id="payError" class="pay-error"></div>
+
+          <button type="submit" id="lipaBtn" class="btn-pay">
+            Lipia TSh 1,000
+          </button>
+        </form>
+
+        <button class="btn-cancel" id="cancelPayBtn">Ghairi</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Waiting for payment -->
+    <div id="payStep2" style="display:none;" class="pay-step2-anim">
+      <div class="pay-top" style="padding-bottom:16px;">
+        <div class="pay-pulse-ring">&#128222;</div>
+        <h3>Ombi la Malipo Limetumwa</h3>
+        <p class="pay-sub" style="margin-bottom:4px;">Tumekutumia ombi la malipo kwenye:</p>
+        <p id="payPhoneDisplay" style="font-size:20px;font-weight:800;color:var(--secondary);margin-top:4px;"></p>
+      </div>
+
+      <div class="pay-body">
+        <div class="pay-progress">
+          <span class="p-dot done"></span>
+          <span class="p-dot active"></span>
+          <span class="p-dot"></span>
+        </div>
+
+        <div class="pay-info-box">
+          <span class="info-icon">&#128161;</span>
+          Tafadhali <strong>ingiza namba yako ya siri</strong> kwenye simu yako ili kukamilisha malipo ya <strong style="color:var(--secondary);">TSh 1,000</strong>
+        </div>
+
+        <div id="payTimer" class="pay-timer">
+          &#9201; Muda uliobaki: <span class="timer-num" id="payTimerNum">30</span>s
+        </div>
+
+        <div id="payWaiting" style="font-size:13px;color:var(--text-light);padding:4px 0 12px;">Inasubiri uthibitisho kutoka kwa mtandao...</div>
+
+        <button id="paySuccessBtn" class="btn-result success" style="display:none;">
+          &#10003; Nimekamilisha Malipo
+        </button>
+        <button id="payFailBtn" class="btn-result danger" style="display:none;">
+          &#10007; Malipo Yamekataliwa
+        </button>
+
+        <button class="btn-cancel" id="payBackBtn" style="margin-top:8px;">Rudi</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
