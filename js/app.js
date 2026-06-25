@@ -14,18 +14,38 @@ function showToast(msg, type) {
   t._t = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
+// ====== MAINTENANCE MODE CHECK ======
+(function checkMaintenance() {
+  const overlay = document.getElementById('maintenanceOverlay');
+  if (!overlay) return;
+  const bypass = new URLSearchParams(window.location.search).get('maintenance_bypass');
+  overlay.style.display = (localStorage.getItem('storika_maintenance') === 'true' && bypass !== '1') ? 'flex' : 'none';
+})();
+
+// Listen for maintenance changes from other tabs
+window.addEventListener('storage', (e) => {
+  if (e.key === 'storika_maintenance') {
+    const overlay = document.getElementById('maintenanceOverlay');
+    if (!overlay) return;
+    const bypass = new URLSearchParams(window.location.search).get('maintenance_bypass');
+    overlay.style.display = (e.newValue === 'true' && bypass !== '1') ? 'flex' : 'none';
+  }
+});
+
 (function initTheme() {
-  const saved = localStorage.getItem('storika-theme') || 'light';
-  document.documentElement.setAttribute('data-theme', saved);
+  const saved = localStorage.getItem('storika-theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const theme = saved || (prefersDark ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', theme);
   const btn = document.getElementById('themeToggle');
   if (btn) {
-    btn.innerHTML = saved === 'dark' ? '&#9728;' : '&#9790;';
+    btn.innerHTML = saved === 'dark' ? '&#9790;' : '&#9728;';
     btn.addEventListener('click', () => {
       const cur = document.documentElement.getAttribute('data-theme');
       const next = cur === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem('storika-theme', next);
-      btn.innerHTML = next === 'dark' ? '&#9728;' : '&#9790;';
+      btn.innerHTML = next === 'dark' ? '&#9790;' : '&#9728;';
     });
   }
 })();
@@ -48,7 +68,11 @@ function navigate(hash) {
   window.scrollTo(0, 0);
 }
 
-window.addEventListener('hashchange', () => navigate(window.location.hash));
+window.addEventListener('hashchange', () => {
+  const modal = document.getElementById('paymentModal');
+  if (modal) modal.classList.remove('active');
+  navigate(window.location.hash);
+});
 window.addEventListener('DOMContentLoaded', () => navigate(window.location.hash || '#/'));
 
 function getMain() { return document.getElementById('mainContent'); }
@@ -71,14 +95,16 @@ function storyCardHTML(s) {
   if (s.type === 'series') badges += '<span class="badge-series">Mfululizo</span>';
   return `<div class="story-card-modern" data-story-id="${s.id}">
     <div class="card-badge">${badges}</div>
-    <img class="card-cover" src="${s.coverImage || defCover()}" alt="${escHtml(s.title)}" loading="lazy">
+    <div class="card-cover-wrapper">
+      <img class="card-cover" src="${s.coverImage || defCover()}" alt="${escHtml(s.title)}" loading="lazy">
+    </div>
     <div class="card-body">
       <h3 class="card-title">${escHtml(s.title)}</h3>
       <div class="card-meta"><span>&#128065; ${s.views || 0} wasomaji</span></div>
       <p class="card-desc">${escHtml(text)}</p>
       <div class="card-foot">
         <span class="card-author">na <strong>${escHtml(s.author || 'Mwandishi wa STORIKA')}</strong></span>
-        <button class="btn-soma" data-read="${s.id}">Soma Sasa</button>
+        <a href="#" class="card-read-btn" data-read="${s.id}">Soma &#8594;</a>
       </div>
     </div>
   </div>`;
@@ -102,16 +128,31 @@ function renderHome() {
   const mc = getMain();
   mc.innerHTML = `
     <section class="hero-modern">
+      <div class="hero-orb"></div>
+      <div class="hero-orb"></div>
+      <div class="hero-orb"></div>
+      <div class="hero-dots"></div>
       <div class="container hero-content">
         <div class="hero-badge">&#128214; Jukwaa la Kusoma Hadithi</div>
-        <h1>Karibu <span>STORIKA</span></h1>
+        <h1>Karibu <span class="no-gradient">STORIKA</span></h1>
         <p class="hero-sub">Soma hadithi za kipekee kwa lugha ya Kiswahili. Burudika na ujifunze kupitia hadithi za kuvutia zilizoandikwa kwa ubora.</p>
+        <a href="#stories" class="hero-cta">&#128269; Gundua Hadithi</a>
+        <div class="hero-stats">
+          <div class="hs-item">
+            <div class="hs-num">${stories.length}</div>
+            <div class="hs-label">Hadithi</div>
+          </div>
+          <div class="hs-item">
+            <div class="hs-num">${stories.reduce((s, st) => s + (st.views || 0), 0)}</div>
+            <div class="hs-label">Wasomaji</div>
+          </div>
+        </div>
       </div>
     </section>
-    <div class="container">
+    <div class="container" id="stories">
       <div class="section-modern">
         <div class="section-head">
-          <h2>Hadithi Zote</h2>
+          <h2><span class="sec-icon">&#128218;</span>Hadithi Zote</h2>
           <span class="section-count">${stories.length} hadithi</span>
         </div>
         ${stories.length
@@ -223,8 +264,12 @@ function renderStory(id) {
         body.style.display = 'none';
         arrow.classList.remove('open');
       }
-    });
   });
+});
+
+// Dynamic copyright year
+const yearEl = document.getElementById('copyrightYear');
+if (yearEl) yearEl.textContent = new Date().getFullYear();
 
   document.getElementById('commentForm').addEventListener('submit', (e) => {
     e.preventDefault();
@@ -246,8 +291,10 @@ function renderStory(id) {
           </div>
         </div>
         <div class="cm-text">${escHtml(c.comment)}</div>
-      </div>`).join('') + '<p style="color:var(--text-light);text-align:center;padding:10px;">Hakuna maoni bado. Kuwa wa kwanza kutoa maoni!</p>';
+      </div>`).join('');
     showToast('Maoni yametumwa!', 'success');
+    // Notify admin of new comment
+    localStorage.setItem('storika_notify_comment', JSON.stringify({ name, comment: text, storyId: id, storyTitle: story.title, time: Date.now() }));
   });
 }
 
@@ -382,6 +429,7 @@ document.getElementById('paymentForm').addEventListener('submit', async (e) => {
   }
 
   let sec = 30;
+  let _payResolved = false;
   document.getElementById('payTimerNum').textContent = sec;
   clearInterval(_payTimer);
   _payTimer = setInterval(() => {
@@ -390,7 +438,8 @@ document.getElementById('paymentForm').addEventListener('submit', async (e) => {
     if (sec <= 10 && sec > 0) {
       document.getElementById('payTimer').style.color = '#dc3545';
     }
-    if (sec <= 0) {
+    if (sec <= 0 && !_payResolved) {
+      _payResolved = true;
       clearInterval(_payTimer);
       document.getElementById('payTimer').style.color = '';
       document.getElementById('payTimerNum').textContent = '0';
@@ -402,6 +451,8 @@ document.getElementById('paymentForm').addEventListener('submit', async (e) => {
   }, 1000);
 
   setTimeout(() => {
+    if (_payResolved) return;
+    _payResolved = true;
     clearInterval(_payTimer);
     document.getElementById('payTimer').style.color = '';
     document.getElementById('payTimerNum').textContent = '0';
@@ -434,6 +485,45 @@ document.getElementById('payBackBtn').addEventListener('click', () => {
   document.getElementById('payTimer').style.color = '';
   document.getElementById('payStep1').style.display = 'block';
   document.getElementById('payStep2').style.display = 'none';
+});
+
+// ====== NOTIFICATIONS (PUBLIC) ======
+const notifToast = document.getElementById('notifToast');
+const notifToastTitle = document.getElementById('notifToastTitle');
+const notifToastDesc = document.getElementById('notifToastDesc');
+
+function showNotifToast(title, desc) {
+  notifToastTitle.textContent = title;
+  notifToastDesc.textContent = desc;
+  notifToast.classList.add('show');
+  clearTimeout(notifToast._t);
+  notifToast._t = setTimeout(() => notifToast.classList.remove('show'), 5000);
+}
+
+(function checkNewStories() {
+  const data = localStorage.getItem('storika_notify_story');
+  if (data) {
+    try {
+      const s = JSON.parse(data);
+      showNotifToast('Hadithi Mpya Imeongezwa', s.title);
+    } catch(e) {}
+    localStorage.removeItem('storika_notify_story');
+  }
+})();
+
+// ====== READING PROGRESS BAR ======
+const progressBar = document.getElementById('readingProgress');
+let _scrollRaf = null;
+window.addEventListener('scroll', () => {
+  if (_scrollRaf) return;
+  _scrollRaf = requestAnimationFrame(() => {
+    _scrollRaf = null;
+    if (!progressBar) return;
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = docHeight > 0 ? Math.min((scrollTop / docHeight) * 100, 100) : 0;
+    progressBar.style.width = pct + '%';
+  });
 });
 
 

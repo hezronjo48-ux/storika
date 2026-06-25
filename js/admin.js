@@ -33,17 +33,19 @@ function showToast(msg, type) {
 
 // ====== THEME ======
 (function() {
-  const saved = localStorage.getItem('storika-theme') || 'light';
-  document.documentElement.setAttribute('data-theme', saved);
+  const saved = localStorage.getItem('storika-theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const theme = saved || (prefersDark ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', theme);
   const btn = document.getElementById('themeToggle');
   if (btn) {
-    btn.innerHTML = saved === 'dark' ? '&#9728;' : '&#9790;';
+    btn.innerHTML = theme === 'dark' ? '&#9790;' : '&#9728;';
     btn.addEventListener('click', () => {
       const cur = document.documentElement.getAttribute('data-theme');
       const next = cur === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem('storika-theme', next);
-      btn.innerHTML = next === 'dark' ? '&#9728;' : '&#9790;';
+      btn.innerHTML = next === 'dark' ? '&#9790;' : '&#9728;';
     });
   }
 })();
@@ -236,24 +238,55 @@ function renderDashboard() {
 
   const ct = document.getElementById('commentsList');
   if (allComments.length) {
-    ct.innerHTML = allComments.map(c => `
-      <div class="comment-card">
-        <div class="comment-head">
-          <div class="comment-author">
-            <div class="comment-avatar">${escHtml(c.name.charAt(0).toUpperCase())}</div>
-            <div>
-              <div class="comment-name">${escHtml(c.name)}</div>
-              <div class="comment-story">kwenye ${escHtml(c.storyTitle)}</div>
-            </div>
+    // Group comments by story title
+    const groups = {};
+    allComments.forEach(c => {
+      const key = c.storyTitle || 'Hajulikani';
+      if (!groups[key]) groups[key] = { title: key, comments: [] };
+      groups[key].comments.push(c);
+    });
+
+    ct.innerHTML = Object.values(groups).map(g => `
+      <div class="comment-story-group">
+        <div class="story-group-header" data-sg-toggle="${escHtml(g.title)}">
+          <div class="sg-left">
+            <div class="sg-icon">&#128214;</div>
+            <span class="sg-title">${escHtml(g.title)}</span>
+            <span class="sg-count">${g.comments.length} maoni</span>
           </div>
-          <small style="font-size:12px;color:var(--text-light);">${new Date(c.createdAt).toLocaleDateString('sw-TZ')}</small>
+          <span class="sg-arrow">&#9660;</span>
         </div>
-        <div class="comment-text">${escHtml(c.comment)}</div>
-        <div class="comment-footer">
-          <span></span>
-          <a href="#" data-del-comment="${c.storyId}|${c.id}" style="color:#dc3545;font-size:12px;font-weight:600;text-decoration:none;">Futa Maoni</a>
+        <div class="story-group-body">
+          ${g.comments.map(c => `
+            <div class="comment-card" style="border-radius:0;border:none;border-bottom:1px solid var(--border);box-shadow:none;margin:0;">
+              <div class="comment-head">
+                <div class="comment-author">
+                  <div class="comment-avatar">${escHtml(c.name.charAt(0).toUpperCase())}</div>
+                  <div>
+                    <div class="comment-name">${escHtml(c.name)}</div>
+                    <div class="comment-story">kwenye ${escHtml(c.storyTitle)}</div>
+                  </div>
+                </div>
+                <small style="font-size:12px;color:var(--text-light);">${new Date(c.createdAt).toLocaleDateString('sw-TZ')}</small>
+              </div>
+              <div class="comment-text">${escHtml(c.comment)}</div>
+              <div class="comment-footer">
+                <span></span>
+                <a href="#" data-del-comment="${c.storyId}|${c.id}" style="color:#dc3545;font-size:12px;font-weight:600;text-decoration:none;">Futa Maoni</a>
+              </div>
+            </div>`).join('')}
         </div>
       </div>`).join('');
+
+    // Toggle story groups
+    document.querySelectorAll('[data-sg-toggle]').forEach(header => {
+      header.addEventListener('click', () => {
+        const body = header.nextElementSibling;
+        const arrow = header.querySelector('.sg-arrow');
+        body.classList.toggle('open');
+        arrow.classList.toggle('open');
+      });
+    });
   } else {
     ct.innerHTML = `<div class="empty-state">
       <div class="empty-icon">&#128172;</div>
@@ -286,6 +319,8 @@ function renderDashboard() {
   document.querySelectorAll('[data-episodes]').forEach(btn => {
     btn.addEventListener('click', () => openEpisodesModal(parseInt(btn.dataset.episodes)));
   });
+
+  updateMaintenanceUI();
 }
 
 function handleTabClick() {
@@ -319,6 +354,7 @@ document.getElementById('addStoryBtn').addEventListener('click', () => {
   document.getElementById('newCoverPreview').style.display = 'none';
   _newCoverDataURL = null;
   document.getElementById('newEpisodesSection').style.display = 'none';
+  document.getElementById('newContentSection').style.display = 'block';
   const list = document.getElementById('newEpisodesList');
   list.innerHTML = '<div class="episode-item" data-ep-row="0"><div class="ep-header"><div class="ep-number">1</div><input type="text" class="new-ep-title" placeholder="Jina la episode" style="flex:1;margin-left:10px;padding:10px 14px;background:var(--bg-alt);border:2px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:inherit;"></div><textarea class="new-ep-content" placeholder="Maudhui ya episode..." style="margin-top:8px;"></textarea></div>';
 });
@@ -327,7 +363,9 @@ document.getElementById('closeAddModalBtn').addEventListener('click', () => docu
 document.getElementById('addModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) document.getElementById('addModal').classList.remove('active'); });
 
 document.getElementById('newType').addEventListener('change', () => {
-  document.getElementById('newEpisodesSection').style.display = document.getElementById('newType').value === 'series' ? 'block' : 'none';
+  const isSeries = document.getElementById('newType').value === 'series';
+  document.getElementById('newEpisodesSection').style.display = isSeries ? 'block' : 'none';
+  document.getElementById('newContentSection').style.display = isSeries ? 'none' : 'block';
 });
 
 document.getElementById('newCoverChooseBtn').addEventListener('click', () => document.getElementById('newCoverFile').click());
@@ -360,7 +398,7 @@ document.getElementById('saveNewStoryBtn').addEventListener('click', () => {
     author: document.getElementById('newAuthor').value.trim() || 'Mwandishi wa STORIKA',
     type: type,
     coverImage: _newCoverDataURL || document.getElementById('newCover').value.trim() || '',
-    content: document.getElementById('newContent').value,
+    content: type === 'series' ? '' : document.getElementById('newContent').value,
     views: 0,
     createdAt: new Date().toISOString()
   });
@@ -389,6 +427,8 @@ document.getElementById('saveNewStoryBtn').addEventListener('click', () => {
   document.getElementById('addModal').classList.remove('active');
   _newCoverDataURL = null;
   showToast('Hadithi imeongezwa!', 'success');
+  // Notify public site of new story
+  localStorage.setItem('storika_notify_story', JSON.stringify({ title: title, time: Date.now() }));
   renderDashboard();
 });
 
@@ -409,7 +449,15 @@ function openEditModal(id) {
   if (story.coverImage) { preview.src = story.coverImage; preview.style.display = 'block'; }
   else preview.style.display = 'none';
   document.getElementById('editModal').classList.add('active');
+  // Show/hide content section based on type
+  const isSeries = story.type === 'series';
+  document.getElementById('editContentSection').style.display = isSeries ? 'none' : 'block';
 }
+
+document.getElementById('editType').addEventListener('change', () => {
+  const isSeries = document.getElementById('editType').value === 'series';
+  document.getElementById('editContentSection').style.display = isSeries ? 'none' : 'block';
+});
 
 document.getElementById('closeEditModalBtn').addEventListener('click', () => { document.getElementById('editModal').classList.remove('active'); editingStoryId = null; _editCoverDataURL = null; });
 document.getElementById('editModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) { document.getElementById('editModal').classList.remove('active'); editingStoryId = null; _editCoverDataURL = null; } });
@@ -443,7 +491,7 @@ document.getElementById('updateStoryBtn').addEventListener('click', () => {
   story.author = document.getElementById('editAuthor').value.trim() || 'Mwandishi wa STORIKA';
   story.type = document.getElementById('editType').value;
   story.coverImage = _editCoverDataURL || document.getElementById('editCover').value.trim() || '';
-  story.content = document.getElementById('editContent').value;
+  story.content = story.type === 'series' ? '' : document.getElementById('editContent').value;
   DB.setStories(stories);
   document.getElementById('editModal').classList.remove('active');
   editingStoryId = null;
@@ -578,12 +626,20 @@ document.getElementById('seedBtn').addEventListener('click', () => {
   const stories = existing;
   samples.forEach((s, i) => {
     if (!stories.find(st => st.title === s.title)) {
+      const id = DB.getNextId() + i;
+      const isSeries = i < 2;
       stories.push({
-        id: DB.getNextId() + i,
-        title: s.title, author: s.author, type: i < 2 ? 'series' : 'single', coverImage: '', content: s.content,
+        id: id,
+        title: s.title, author: s.author, type: isSeries ? 'series' : 'single', coverImage: '', content: isSeries ? '' : s.content,
         views: Math.floor(Math.random() * 500) + 10,
         createdAt: new Date(Date.now() - i * 86400000).toISOString()
       });
+      if (isSeries) {
+        DB.setEpisodes(id, [
+          { id: DB.getNextId() + i + 100, storyId: id, title: 'Sehemu ya 1', number: 1, content: s.content, createdAt: new Date().toISOString() },
+          { id: DB.getNextId() + i + 200, storyId: id, title: 'Sehemu ya 2', number: 2, content: '<p>Mwendelezo wa hadithi hii unakuja hivi karibuni...</p>', createdAt: new Date().toISOString() }
+        ]);
+      }
     }
   });
   DB.setStories(stories);
@@ -612,6 +668,120 @@ document.getElementById('addNewEpisodeRowBtn').addEventListener('click', () => {
   div.innerHTML = `<div class="ep-header"><div class="ep-number">${num}</div><input type="text" class="new-ep-title" placeholder="Jina la episode" style="flex:1;margin-left:10px;padding:10px 14px;background:var(--bg-alt);border:2px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:inherit;"></div><textarea class="new-ep-content" placeholder="Maudhui ya episode..." style="margin-top:8px;"></textarea>`;
   list.appendChild(div);
 });
+
+// ====== MAINTENANCE MODE ======
+const maintenanceToggle = document.getElementById('maintenanceToggle');
+const maintenanceStatusText = document.getElementById('maintenanceStatusText');
+const maintenanceToggleLabel = document.getElementById('maintenanceToggleLabel');
+const maintenanceCard = document.getElementById('maintenanceSection');
+const viewSiteBtn = document.getElementById('viewSiteBtn');
+
+function updateMaintenanceUI() {
+  const isOn = localStorage.getItem('storika_maintenance') === 'true';
+  maintenanceToggle.checked = isOn;
+  if (isOn) {
+    maintenanceStatusText.textContent = 'Tovuti iko kwenye matengenezo - watumiaji hawawezi kufikia chochote';
+    maintenanceToggleLabel.textContent = 'Zima Matengenezo';
+    maintenanceCard.classList.add('maintenance-on');
+    viewSiteBtn.style.display = 'inline-flex';
+  } else {
+    maintenanceStatusText.textContent = 'Tovuti inafanya kazi kwa kawaida';
+    maintenanceToggleLabel.textContent = 'Washa Matengenezo';
+    maintenanceCard.classList.remove('maintenance-on');
+    viewSiteBtn.style.display = 'none';
+  }
+}
+
+maintenanceToggle.addEventListener('change', () => {
+  const isOn = maintenanceToggle.checked;
+  localStorage.setItem('storika_maintenance', isOn ? 'true' : 'false');
+  updateMaintenanceUI();
+  showToast(isOn ? 'Tovuti iko sasa kwenye matengenezo' : 'Matengenezo yamezimwa, tovuti inafanya kazi', 'success');
+});
+
+// ====== NOTIFICATIONS ======
+let lastNotifCheck = parseInt(localStorage.getItem('storika_notif_last_check') || '0');
+let notifCount = parseInt(localStorage.getItem('storika_notif_count') || '0');
+const notifBadge = document.getElementById('notifBadge');
+const notifPanel = document.getElementById('notifPanel');
+const notifBody = document.getElementById('notifBody');
+const notifList = document.getElementById('notifList');
+const notifEmpty = document.getElementById('notifEmpty');
+const notifToast = document.getElementById('notifToast');
+const notifToastTitle = document.getElementById('notifToastTitle');
+const notifToastDesc = document.getElementById('notifToastDesc');
+
+function showNotifToast(title, desc) {
+  notifToastTitle.textContent = title;
+  notifToastDesc.textContent = desc;
+  notifToast.classList.add('show');
+  clearTimeout(notifToast._t);
+  notifToast._t = setTimeout(() => notifToast.classList.remove('show'), 5000);
+}
+
+function updateNotifBadge() {
+  notifBadge.textContent = notifCount;
+  notifBadge.style.display = notifCount > 0 ? 'inline' : 'none';
+}
+
+function renderNotifPanel() {
+  const raw = localStorage.getItem('storika_notifications');
+  const notifications = raw ? JSON.parse(raw) : [];
+  notifList.innerHTML = notifications.length
+    ? notifications.map(n => `
+      <div class="notif-item">
+        <div class="notif-dot"></div>
+        <div class="notif-content">
+          <p class="notif-title">${n.title}</p>
+          <p class="notif-desc">${n.desc}</p>
+          <p class="notif-time">${new Date(n.time).toLocaleString('sw-TZ')}</p>
+        </div>
+      </div>`).join('')
+    : '';
+  notifEmpty.style.display = notifications.length ? 'none' : 'block';
+}
+
+function addNotification(title, desc) {
+  const raw = localStorage.getItem('storika_notifications');
+  const notifications = raw ? JSON.parse(raw) : [];
+  notifications.unshift({ id: Date.now(), title, desc, time: Date.now() });
+  if (notifications.length > 50) notifications.length = 50;
+  localStorage.setItem('storika_notifications', JSON.stringify(notifications));
+  notifCount++;
+  localStorage.setItem('storika_notif_count', String(notifCount));
+  updateNotifBadge();
+  renderNotifPanel();
+  showNotifToast(title, desc);
+}
+
+function checkNewNotifications() {
+  const commentData = localStorage.getItem('storika_notify_comment');
+  if (commentData) {
+    try {
+      const data = JSON.parse(commentData);
+      if (data.time > lastNotifCheck) {
+        addNotification('Maoni Mapya', `${data.name} aliandika maoni kwenye "${data.storyTitle || 'hadithi'}": "${data.comment.substring(0, 50)}${data.comment.length > 50 ? '...' : ''}"`);
+      }
+    } catch(e) {}
+    localStorage.removeItem('storika_notify_comment');
+  }
+
+  lastNotifCheck = Date.now();
+  localStorage.setItem('storika_notif_last_check', String(lastNotifCheck));
+}
+
+document.getElementById('notifSidebarBtn').addEventListener('click', (e) => {
+  e.preventDefault();
+  notifPanel.classList.toggle('open');
+});
+
+document.getElementById('closeNotifBtn').addEventListener('click', () => {
+  notifPanel.classList.remove('open');
+});
+
+renderNotifPanel();
+updateNotifBadge();
+setInterval(checkNewNotifications, 3000);
 
 // ====== INIT ======
 checkAuth();
