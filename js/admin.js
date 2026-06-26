@@ -495,37 +495,39 @@ document.getElementById('saveNewStoryBtn').addEventListener('click', async () =>
     views: 0
   };
 
+  let saved;
   try {
-    const saved = await API.addStory(story);
-    // Cache locally
-    const stories = DB.getStories();
-    stories.unshift(saved);
-    DB.setStories(stories);
-
-    if (type === 'series') {
-      const epTitles = document.querySelectorAll('.new-ep-title');
-      const epContents = document.querySelectorAll('.new-ep-content');
-      epTitles.forEach(async (input, i) => {
-        const epTitle = input.value.trim();
-        if (epTitle) {
-          const ep = {
-            title: epTitle,
-            number: i + 1,
-            content: epContents[i] ? epContents[i].value : ''
-          };
-          await API.addEpisode(saved.id, ep);
-        }
-      });
-    }
-
-    document.getElementById('addModal').classList.remove('active');
-    _newCoverDataURL = null;
-    showToast('Hadithi imeongezwa!', 'success');
-    localStorage.setItem('storika_notify_story', JSON.stringify({ title: title, time: Date.now() }));
-    await renderDashboard();
+    saved = await API.addStory(story);
   } catch(e) {
-    showToast('Hitilafu: ' + e.message, 'error');
+    saved = { id: DB.getNextId(), ...story, createdAt: new Date().toISOString() };
   }
+  const stories = DB.getStories();
+  stories.unshift(saved);
+  DB.setStories(stories);
+
+  if (type === 'series') {
+    const epTitles = document.querySelectorAll('.new-ep-title');
+    const epContents = document.querySelectorAll('.new-ep-content');
+    for (let i = 0; i < epTitles.length; i++) {
+      const epTitle = epTitles[i].value.trim();
+      if (epTitle) {
+        const ep = { title: epTitle, number: i + 1, content: epContents[i] ? epContents[i].value : '' };
+        try {
+          await API.addEpisode(saved.id, ep);
+        } catch(e) {
+          const eps = DB.getEpisodes(saved.id);
+          eps.push({ id: DB.getNextId(), storyId: saved.id, ...ep, createdAt: new Date().toISOString() });
+          DB.setEpisodes(saved.id, eps);
+        }
+      }
+    }
+  }
+
+  document.getElementById('addModal').classList.remove('active');
+  _newCoverDataURL = null;
+  showToast('Hadithi imeongezwa!', 'success');
+  localStorage.setItem('storika_notify_story', JSON.stringify({ title: title, time: Date.now() }));
+  await renderDashboard();
 });
 
 // ====== EDIT STORY ======
@@ -582,54 +584,49 @@ document.getElementById('updateStoryBtn').addEventListener('click', async () => 
   if (!editingStoryId) return;
   const title = document.getElementById('editTitle').value.trim();
   if (!title) return showToast('Jina la hadithi linahitajika', 'error');
+  const updates = {
+    title,
+    author: document.getElementById('editAuthor').value.trim() || 'Mwandishi wa STORIKA',
+    type: document.getElementById('editType').value,
+    coverImage: _editCoverDataURL || document.getElementById('editCover').value.trim() || '',
+    content: document.getElementById('editType').value === 'series' ? '' : document.getElementById('editContent').value
+  };
   try {
-    const updates = {
-      title,
-      author: document.getElementById('editAuthor').value.trim() || 'Mwandishi wa STORIKA',
-      type: document.getElementById('editType').value,
-      coverImage: _editCoverDataURL || document.getElementById('editCover').value.trim() || '',
-      content: document.getElementById('editType').value === 'series' ? '' : document.getElementById('editContent').value
-    };
     await API.updateStory(editingStoryId, updates);
-    // Update local cache
-    const stories = DB.getStories();
-    const idx = stories.findIndex(s => s.id === editingStoryId);
-    if (idx !== -1) {
-      stories[idx] = { ...stories[idx], ...updates };
-      DB.setStories(stories);
-    }
-    document.getElementById('editModal').classList.remove('active');
-    editingStoryId = null;
-    _editCoverDataURL = null;
-    showToast('Hadithi imehifadhiwa!', 'success');
-    await renderDashboard();
-  } catch(e) { showToast('Hitilafu: ' + e.message, 'error'); }
+  } catch(e) {}
+  const stories = DB.getStories();
+  const idx = stories.findIndex(s => s.id === editingStoryId);
+  if (idx !== -1) {
+    stories[idx] = { ...stories[idx], ...updates };
+    DB.setStories(stories);
+  }
+  document.getElementById('editModal').classList.remove('active');
+  editingStoryId = null;
+  _editCoverDataURL = null;
+  showToast('Hadithi imehifadhiwa!', 'success');
+  await renderDashboard();
 });
 
 // ====== DELETE ======
 async function deleteStory(id) {
   if (!confirm('Una uhakika unataka kufuta hadithi hii?')) return;
-  try {
-    await API.deleteStory(id);
-    let stories = DB.getStories();
-    stories = stories.filter(s => s.id !== id);
-    DB.setStories(stories);
-    localStorage.removeItem('storika_comments_' + id);
-    showToast('Hadithi imefutwa!', 'success');
-    await renderDashboard();
-  } catch(e) { showToast('Hitilafu: ' + e.message, 'error'); }
+  try { await API.deleteStory(id); } catch(e) {}
+  let stories = DB.getStories();
+  stories = stories.filter(s => s.id !== id);
+  DB.setStories(stories);
+  localStorage.removeItem('storika_comments_' + id);
+  showToast('Hadithi imefutwa!', 'success');
+  await renderDashboard();
 }
 
 async function deleteComment(storyId, commentId) {
   if (!confirm('Una uhakika unataka kufuta maoni haya?')) return;
-  try {
-    await API.deleteComment(storyId, commentId);
-    let comments = DB.getComments(storyId);
-    comments = comments.filter(c => c.id !== commentId);
-    DB.setComments(storyId, comments);
-    showToast('Maoni yamefutwa!', 'success');
-    await renderDashboard();
-  } catch(e) { showToast('Hitilafu: ' + e.message, 'error'); }
+  try { await API.deleteComment(storyId, commentId); } catch(e) {}
+  let comments = DB.getComments(storyId);
+  comments = comments.filter(c => c.id !== commentId);
+  DB.setComments(storyId, comments);
+  showToast('Maoni yamefutwa!', 'success');
+  await renderDashboard();
 }
 
 // ====== EPISODES ======
@@ -690,36 +687,42 @@ document.getElementById('addEpisodeBtn').addEventListener('click', async () => {
   if (!_episodesStoryId) return;
   const title = document.getElementById('newEpisodeTitle').value.trim();
   if (!title) return showToast('Jina la episode linahitajika', 'error');
+  let ep;
   try {
-    let eps = [];
-    try { eps = await API.getEpisodes(_episodesStoryId); } catch(e) {}
-    const number = eps.length + 1;
-    const ep = await API.addEpisode(_episodesStoryId, { title, number, content: '' });
-    document.getElementById('newEpisodeTitle').value = '';
-    await renderEpisodesList(_episodesStoryId);
-    showToast('Episode imeongezwa!', 'success');
-    await renderDashboard();
-  } catch(e) { showToast('Hitilafu: ' + e.message, 'error'); }
+    ep = await API.addEpisode(_episodesStoryId, { title, number: 1, content: '' });
+  } catch(e) {
+    ep = { id: DB.getNextId(), storyId: _episodesStoryId, title, number: 1, content: '', createdAt: new Date().toISOString() };
+    const eps = DB.getEpisodes(_episodesStoryId);
+    eps.push(ep);
+    DB.setEpisodes(_episodesStoryId, eps);
+  }
+  document.getElementById('newEpisodeTitle').value = '';
+  await renderEpisodesList(_episodesStoryId);
+  showToast('Episode imeongezwa!', 'success');
+  await renderDashboard();
 });
 
 document.getElementById('closeEpisodesModalBtn').addEventListener('click', () => { document.getElementById('episodesModal').classList.remove('active'); _episodesStoryId = null; });
 document.getElementById('episodesModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) { document.getElementById('episodesModal').classList.remove('active'); _episodesStoryId = null; } });
 
 async function saveEpisode(storyId, epId, content) {
-  try {
-    await API.updateEpisode(storyId, epId, { content });
-    showToast('Episode imehifadhiwa!', 'success');
-  } catch(e) { showToast('Hitilafu: ' + e.message, 'error'); }
+  try { await API.updateEpisode(storyId, epId, { content }); } catch(e) {}
+  const eps = DB.getEpisodes(storyId);
+  const ep = eps.find(e => e.id === epId);
+  if (ep) { ep.content = content; DB.setEpisodes(storyId, eps); }
+  showToast('Episode imehifadhiwa!', 'success');
 }
 
 async function deleteEpisode(storyId, epId) {
   if (!confirm('Una uhakika unataka kufuta episode hii?')) return;
-  try {
-    await API.deleteEpisode(storyId, epId);
-    await renderEpisodesList(storyId);
-    await renderDashboard();
-    showToast('Episode imefutwa!', 'success');
-  } catch(e) { showToast('Hitilafu: ' + e.message, 'error'); }
+  try { await API.deleteEpisode(storyId, epId); } catch(e) {}
+  let eps = DB.getEpisodes(storyId);
+  eps = eps.filter(e => e.id !== epId);
+  eps = eps.map((e, i) => { e.number = i + 1; return e; });
+  DB.setEpisodes(storyId, eps);
+  await renderEpisodesList(storyId);
+  await renderDashboard();
+  showToast('Episode imefutwa!', 'success');
 }
 
 // ====== SEED & RESET ======

@@ -1,0 +1,15 @@
+{
+  "stories": [
+    {
+      "id": 1782505670316,
+      "title": "Test Story",
+      "author": "Test",
+      "type": "single",
+      "content": "<p>Test</p>",
+      "views": 0,
+      "createdAt": "2026-06-26T20:27:50.316Z"
+    }
+  ],
+  "episodes": {},
+  "comments": {}
+}

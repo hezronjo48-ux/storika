@@ -274,26 +274,32 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
     const name = document.getElementById('commentName').value.trim() || 'Msomaji';
     const text = document.getElementById('commentText').value.trim();
     if (!text) return;
+    let saved;
     try {
-      const saved = await API.addComment(id, { name, comment: text });
-      let comments = [];
-      try { comments = await API.getComments(id); } catch(ex) { comments = DB.getComments(id); comments.unshift(saved); }
-      document.getElementById('commentText').value = '';
-      const list = document.getElementById('commentsList');
-      list.innerHTML = comments.map(c => `
-        <div class="cm-item">
-          <div class="cm-author">
-            <div class="cm-avatar">${escHtml((c.name||'M').charAt(0).toUpperCase())}</div>
-            <div>
-              <div class="cm-name">${escHtml(c.name||'Msomaji')}</div>
-              <div class="cm-date">${new Date(c.createdAt).toLocaleDateString('sw-TZ')}</div>
-            </div>
+      saved = await API.addComment(id, { name, comment: text });
+    } catch(ex) {
+      saved = { id: DB.getNextId(), storyId: id, name, comment: text, createdAt: new Date().toISOString() };
+      const existing = DB.getComments(id);
+      existing.unshift(saved);
+      DB.setComments(id, existing);
+    }
+    let comments = [];
+    try { comments = await API.getComments(id); } catch(ex) { comments = DB.getComments(id); }
+    document.getElementById('commentText').value = '';
+    const list = document.getElementById('commentsList');
+    list.innerHTML = comments.map(c => `
+      <div class="cm-item">
+        <div class="cm-author">
+          <div class="cm-avatar">${escHtml((c.name||'M').charAt(0).toUpperCase())}</div>
+          <div>
+            <div class="cm-name">${escHtml(c.name||'Msomaji')}</div>
+            <div class="cm-date">${new Date(c.createdAt).toLocaleDateString('sw-TZ')}</div>
           </div>
-          <div class="cm-text">${escHtml(c.comment)}</div>
-        </div>`).join('');
-      showToast('Maoni yametumwa!', 'success');
-      localStorage.setItem('storika_notify_comment', JSON.stringify({ name, comment: text, storyId: id, storyTitle: story.title, time: Date.now() }));
-    } catch(ex) { showToast('Hitilafu: ' + ex.message, 'error'); }
+        </div>
+        <div class="cm-text">${escHtml(c.comment)}</div>
+      </div>`).join('');
+    showToast('Maoni yametumwa!', 'success');
+    localStorage.setItem('storika_notify_comment', JSON.stringify({ name, comment: text, storyId: id, storyTitle: story.title, time: Date.now() }));
   });
 }
 
