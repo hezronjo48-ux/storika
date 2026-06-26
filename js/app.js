@@ -1,3 +1,18 @@
+const API = {
+  base: '/api',
+  async get(url) { const r = await fetch(this.base + url); if (!r.ok) throw new Error(await r.text()); return r.json(); },
+  async post(url, body) { const r = await fetch(this.base + url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) }); if (!r.ok) throw new Error(await r.text()); return r.json(); },
+  async put(url, body) { const r = await fetch(this.base + url, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) }); if (!r.ok) throw new Error(await r.text()); return r.json(); },
+  async del(url) { const r = await fetch(this.base + url, { method:'DELETE' }); if (!r.ok) throw new Error(await r.text()); return r.json(); },
+
+  async getStories() { return this.get('/stories'); },
+  async getStory(id) { return this.get('/stories/' + id); },
+  async addView(id) { return this.post('/stories/' + id + '/view', {}); },
+  async getEpisodes(storyId) { return this.get('/episodes/' + storyId); },
+  async getComments(storyId) { return this.get('/comments/' + storyId); },
+  async addComment(storyId, comment) { return this.post('/comments/' + storyId, comment); }
+};
+
 const DB = {
   getStories() { return JSON.parse(localStorage.getItem('storika_stories') || '[]'); },
   setStories(s) { localStorage.setItem('storika_stories', JSON.stringify(s)); },
@@ -50,19 +65,19 @@ window.addEventListener('storage', (e) => {
   }
 })();
 
-function navigate(hash) {
+async function navigate(hash) {
   const route = hash.replace('#', '') || '/';
   const parts = route.split('/').filter(Boolean);
   const navLinks = document.querySelectorAll('.nav a');
   navLinks.forEach(a => a.classList.remove('active'));
 
   if (route === '/') {
-    renderHome();
+    await renderHome();
     navLinks.forEach(a => { if (a.dataset.nav === '/') a.classList.add('active'); });
   } else if (parts[0] === 'story') {
-    renderStory(parseInt(parts[1]));
+    await renderStory(parseInt(parts[1]));
   } else {
-    renderHome();
+    await renderHome();
     navLinks.forEach(a => { if (a.dataset.nav === '/') a.classList.add('active'); });
   }
   window.scrollTo(0, 0);
@@ -89,22 +104,21 @@ function isMpya(s) {
   return days < 7;
 }
 function storyCardHTML(s) {
-  const text = s.content ? s.content.replace(/<[^>]*>/g, '').substring(0, 100) : '';
+  const text = s.content ? s.content.replace(/<[^>]*>/g, '').substring(0, 70) : '';
   let badges = '';
   if (isMpya(s)) badges += '<span class="badge-new">Mpya</span>';
   if (s.type === 'series') badges += '<span class="badge-series">Mfululizo</span>';
-  return `<div class="story-card-modern" data-story-id="${s.id}">
+  return `<div class="story-card-modern" data-read="${s.id}">
     <div class="card-badge">${badges}</div>
     <div class="card-cover-wrapper">
       <img class="card-cover" src="${s.coverImage || defCover()}" alt="${escHtml(s.title)}" loading="lazy">
     </div>
     <div class="card-body">
       <h3 class="card-title">${escHtml(s.title)}</h3>
-      <div class="card-meta"><span>&#128065; ${s.views || 0} wasomaji</span></div>
       <p class="card-desc">${escHtml(text)}</p>
       <div class="card-foot">
         <span class="card-author">na <strong>${escHtml(s.author || 'Mwandishi wa STORIKA')}</strong></span>
-        <a href="#" class="card-read-btn" data-read="${s.id}">Soma &#8594;</a>
+        <span class="card-views">&#128065; ${s.views || 0}</span>
       </div>
     </div>
   </div>`;
@@ -121,38 +135,20 @@ function getDefaultCover() {
   return 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22200%22%3E%3Crect width=%22400%22 height=%22200%22 fill=%22%230A2342%22/%3E%3Ctext x=%22200%22 y=%22110%22 font-family=%22sans-serif%22 font-size=%2240%22 text-anchor=%22middle%22 fill=%22%23D4AF37%22%3E📖%3C/text%3E%3C/svg%3E';
 }
 
-function renderHome() {
+async function loadStories() {
+  try { const s = await API.getStories(); if (s && s.length > 0) DB.setStories(s); return s && s.length > 0 ? s : DB.getStories(); } catch(e) { return DB.getStories(); }
+}
+
+async function renderHome() {
   setTitle('Nyumbani');
-  const stories = DB.getStories();
+  const stories = await loadStories();
 
   const mc = getMain();
   mc.innerHTML = `
-    <section class="hero-modern">
-      <div class="hero-orb"></div>
-      <div class="hero-orb"></div>
-      <div class="hero-orb"></div>
-      <div class="hero-dots"></div>
-      <div class="container hero-content">
-        <div class="hero-badge">&#128214; Jukwaa la Kusoma Hadithi</div>
-        <h1>Karibu <span class="no-gradient">STORIKA</span></h1>
-        <p class="hero-sub">Soma hadithi za kipekee kwa lugha ya Kiswahili. Burudika na ujifunze kupitia hadithi za kuvutia zilizoandikwa kwa ubora.</p>
-        <a href="#stories" class="hero-cta">&#128269; Gundua Hadithi</a>
-        <div class="hero-stats">
-          <div class="hs-item">
-            <div class="hs-num">${stories.length}</div>
-            <div class="hs-label">Hadithi</div>
-          </div>
-          <div class="hs-item">
-            <div class="hs-num">${stories.reduce((s, st) => s + (st.views || 0), 0)}</div>
-            <div class="hs-label">Wasomaji</div>
-          </div>
-        </div>
-      </div>
-    </section>
-    <div class="container" id="stories">
+    <div class="container" style="padding-top:32px;" id="stories">
       <div class="section-modern">
         <div class="section-head">
-          <h2><span class="sec-icon">&#128218;</span>Hadithi Zote</h2>
+          <h2><span class="sec-icon">&#128218;</span>Hadithi</h2>
           <span class="section-count">${stories.length} hadithi</span>
         </div>
         ${stories.length
@@ -162,27 +158,29 @@ function renderHome() {
     </div>`;
 }
 
-function getEpisodes(storyId) {
-  try { return JSON.parse(localStorage.getItem('storika_episodes_' + storyId) || '[]'); } catch(e) { return []; }
+async function getEpisodes(storyId) {
+  try { return await API.getEpisodes(storyId); } catch(e) { try { return JSON.parse(localStorage.getItem('storika_episodes_' + storyId) || '[]'); } catch(ex) { return []; } }
 }
 
-function renderStory(id) {
-  const stories = DB.getStories();
-  const story = stories.find(s => s.id === id);
+async function renderStory(id) {
+  let stories = await loadStories();
+  let story = stories.find(s => s.id === id);
   if (!story) { navigate('#/'); return; }
   setTitle(story.title);
 
-  story.views = (story.views || 0) + 1;
+  // Increment views via API
+  try { const v = await API.addView(id); story.views = v.views; } catch(e) { story.views = (story.views || 0) + 1; }
   DB.setStories(stories);
 
-  const comments = DB.getComments(id);
+  let comments = [];
+  try { comments = await API.getComments(id); } catch(e) { comments = DB.getComments(id); }
   const cover = story.coverImage || getDefaultCover();
-  const episodes = story.type === 'series' ? getEpisodes(id) : [];
+  const episodes = story.type === 'series' ? await getEpisodes(id) : [];
 
-  const allStories = DB.getStories();
-  const idx = allStories.findIndex(s => s.id === id);
-  const prevStory = idx > 0 ? allStories[idx - 1] : null;
-  const nextStory = idx < allStories.length - 1 ? allStories[idx + 1] : null;
+  stories = await loadStories();
+  const idx = stories.findIndex(s => s.id === id);
+  const prevStory = idx > 0 ? stories[idx - 1] : null;
+  const nextStory = idx < stories.length - 1 ? stories[idx + 1] : null;
 
   let contentHtml = '';
   if (story.type === 'series' && episodes.length > 0) {
@@ -271,30 +269,31 @@ function renderStory(id) {
 const yearEl = document.getElementById('copyrightYear');
 if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-  document.getElementById('commentForm').addEventListener('submit', (e) => {
+  document.getElementById('commentForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = document.getElementById('commentName').value.trim() || 'Msomaji';
     const text = document.getElementById('commentText').value.trim();
     if (!text) return;
-    const comments = DB.getComments(id);
-    comments.unshift({ id: Date.now(), name, comment: text, createdAt: new Date().toISOString() });
-    DB.setComments(id, comments);
-    document.getElementById('commentText').value = '';
-    const list = document.getElementById('commentsList');
-    list.innerHTML = comments.map(c => `
-      <div class="cm-item">
-        <div class="cm-author">
-          <div class="cm-avatar">${escHtml(c.name.charAt(0).toUpperCase())}</div>
-          <div>
-            <div class="cm-name">${escHtml(c.name)}</div>
-            <div class="cm-date">${new Date(c.createdAt).toLocaleDateString('sw-TZ')}</div>
+    try {
+      const saved = await API.addComment(id, { name, comment: text });
+      let comments = [];
+      try { comments = await API.getComments(id); } catch(ex) { comments = DB.getComments(id); comments.unshift(saved); }
+      document.getElementById('commentText').value = '';
+      const list = document.getElementById('commentsList');
+      list.innerHTML = comments.map(c => `
+        <div class="cm-item">
+          <div class="cm-author">
+            <div class="cm-avatar">${escHtml((c.name||'M').charAt(0).toUpperCase())}</div>
+            <div>
+              <div class="cm-name">${escHtml(c.name||'Msomaji')}</div>
+              <div class="cm-date">${new Date(c.createdAt).toLocaleDateString('sw-TZ')}</div>
+            </div>
           </div>
-        </div>
-        <div class="cm-text">${escHtml(c.comment)}</div>
-      </div>`).join('');
-    showToast('Maoni yametumwa!', 'success');
-    // Notify admin of new comment
-    localStorage.setItem('storika_notify_comment', JSON.stringify({ name, comment: text, storyId: id, storyTitle: story.title, time: Date.now() }));
+          <div class="cm-text">${escHtml(c.comment)}</div>
+        </div>`).join('');
+      showToast('Maoni yametumwa!', 'success');
+      localStorage.setItem('storika_notify_comment', JSON.stringify({ name, comment: text, storyId: id, storyTitle: story.title, time: Date.now() }));
+    } catch(ex) { showToast('Hitilafu: ' + ex.message, 'error'); }
   });
 }
 

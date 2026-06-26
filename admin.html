@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>STORIKA - Admin Panel</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
@@ -1043,6 +1046,7 @@
           <div class="user-name" id="sidebarName">Admin</div>
           <div class="user-role">Msimamizi</div>
         </div>
+        <button class="btn-logout-sidebar" id="changePassBtn" title="Badilisha nywila" style="margin-right:4px;">&#9881;</button>
         <button class="btn-logout-sidebar" id="logoutBtn" title="Toka">&#10005;</button>
       </div>
     </div>
@@ -1079,49 +1083,18 @@
             <form id="loginForm">
               <div class="form-group">
                 <label>Barua Pepe</label>
-                <input type="email" id="loginEmail" placeholder="admin@storika.co.tz" value="admin@storika.co.tz" required>
+                <input type="email" id="loginEmail" placeholder="Ingiza barua pepe" required>
               </div>
               <div class="form-group">
                 <label>Nywila</label>
-                <input type="password" id="loginPassword" placeholder="••••••••" value="admin123" required>
+                <input type="password" id="loginPassword" placeholder="Ingiza nywila" required>
               </div>
               <div class="auth-error" id="loginError"></div>
               <div class="auth-success" id="loginSuccess"></div>
               <button type="submit" class="btn-auth">Ingia kwenye Admin</button>
             </form>
-            <div class="auth-divider">au</div>
-            <div class="default-credentials">
-              Default: <code>admin@storika.co.tz</code> / <code>admin123</code>
-            </div>
-            <div class="auth-toggle">Huna akaunti? <a id="showRegister">Jisajili</a></div>
-          </div>
-
-          <div class="auth-card-modern" id="registerCard" style="display:none;">
-            <div class="auth-logo">
-              <img src="images/logo.png" alt="STORIKA">
-              <h2>Jisajili</h2>
-              <p>Unda akaunti yako ya admin</p>
-            </div>
-            <form id="registerForm">
-              <div class="form-group">
-                <label>Jina Lako</label>
-                <input type="text" id="regName" placeholder="Jina kamili" required>
-              </div>
-              <div class="form-group">
-                <label>Barua Pepe</label>
-                <input type="email" id="regEmail" placeholder="admin@example.com" required>
-              </div>
-              <div class="form-group">
-                <label>Nywila</label>
-                <input type="password" id="regPassword" placeholder="Angalau herufi 4" required minlength="4">
-              </div>
-              <div class="auth-error" id="registerError"></div>
-              <div class="auth-success" id="registerSuccess"></div>
-              <button type="submit" class="btn-auth">Unda Akaunti</button>
-            </form>
-            <div class="auth-toggle">Tayari una akaunti? <a id="showLogin">Ingia</a></div>
-          </div>
         </div>
+      </div>
       </div>
 
       <!-- Dashboard Section -->
@@ -1305,6 +1278,30 @@
   </div>
 </div>
 
+<!-- Change Password Modal -->
+<div class="modal-modern" id="changePassModal">
+  <div class="modal-card">
+    <h3>Badilisha Nywila</h3>
+    <p class="modal-sub">Weka nywila mpya ya akaunti yako</p>
+    <div class="form-group">
+      <label>Nywila ya Sasa</label>
+      <input type="password" id="oldPassword" placeholder="Weka nywila yako ya sasa" required>
+    </div>
+    <div class="form-group">
+      <label>Nywila Mpya</label>
+      <input type="password" id="newPassword" placeholder="Weka nywila mpya" required minlength="4">
+    </div>
+    <div class="form-group">
+      <label>Rudia Nywila Mpya</label>
+      <input type="password" id="confirmPassword" placeholder="Rudia nywila mpya" required>
+    </div>
+    <div class="auth-error" id="changePassError"></div>
+    <div class="auth-success" id="changePassSuccess"></div>
+    <button class="btn-auth" id="saveNewPassBtn">Hifadhi Nywila</button>
+    <button class="btn-auth outline" id="cancelChangePassBtn" style="margin-top:8px;">Ghairi</button>
+  </div>
+</div>
+
 <!-- Notification Panel -->
 <div class="notif-panel" id="notifPanel">
   <div class="notif-panel-header">
@@ -1329,6 +1326,6 @@
   </div>
 </div>
 
-<script src="js/admin.js"></script>
+<script src="js/admin.js?v=20260626"></script>
 </body>
 </html>

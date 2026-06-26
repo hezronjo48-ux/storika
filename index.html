@@ -3,10 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>STORIKA - Jukwaa la Kusoma Hadithi</title>
+  <title>STORIKA - Jukwaa la Kusoma Hadithi kwa Kiswahili</title>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
-  <meta name="description" content="STORIKA - Jukwaa la Kusoma Hadithi kwa Kiswahili">
+  <meta name="description" content="STORIKA - Jukwaa la kusoma na kuchapisha hadithi za Kiswahili. Soma hadithi, fanya majaribio, na jifunze Kiswahili kwa njia ya kufurahisha.">
+  <meta name="keywords" content="storika, hadithi, kiswahili, kusoma, swahili stories, tanzania, learning swahili, africa">
+  <meta name="robots" content="index, follow">
+
+  <link rel="canonical" href="https://storika.co.tz/">
+  <meta property="og:title" content="STORIKA - Jukwaa la Kusoma Hadithi kwa Kiswahili">
+  <meta property="og:description" content="Soma hadithi za Kiswahili, fanya majaribio, na jifunze lugha kwa njia ya kufurahisha.">
+  <meta property="og:url" content="https://storika.co.tz/">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://storika.co.tz/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="STORIKA - Jukwaa la Kusoma Hadithi kwa Kiswahili">
+  <meta name="twitter:description" content="Soma hadithi za Kiswahili, fanya majaribio, na jifunze lugha kwa njia ya kufurahisha.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
@@ -115,200 +128,58 @@
     }
 
     /* ─── HERO ─── */
-    .hero-modern {
-      position: relative;
-      background: linear-gradient(135deg, #0A2342 0%, #1a3a6a 40%, #2d1b69 100%);
-      padding: 100px 0 120px;
-      text-align: center;
-      color: #fff;
-      overflow: hidden;
-      isolation: isolate;
-    }
-    /* Floating gradient orbs */
-    .hero-modern .hero-orb {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(60px);
-      opacity: 0.15;
-      pointer-events: none;
-      animation: heroFloat 20s ease-in-out infinite;
-    }
-    .hero-modern .hero-orb:nth-child(1) {
-      width: 600px; height: 600px;
-      background: radial-gradient(circle, #D4AF37, transparent 70%);
-      top: -20%; left: -10%;
-      animation-duration: 25s;
-    }
-    .hero-modern .hero-orb:nth-child(2) {
-      width: 400px; height: 400px;
-      background: radial-gradient(circle, #4fc3f7, transparent 70%);
-      bottom: -15%; right: -10%;
-      animation-duration: 20s;
-      animation-direction: reverse;
-    }
-    .hero-modern .hero-orb:nth-child(3) {
-      width: 300px; height: 300px;
-      background: radial-gradient(circle, #D4AF37, transparent 70%);
-      top: 10%; right: 20%;
-      animation-duration: 30s;
-      animation-delay: -5s;
-    }
-    /* Floating dots pattern */
-    .hero-modern .hero-dots {
-      position: absolute;
-      inset: 0;
-      background-image: radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
-      background-size: 40px 40px;
-      opacity: 0.5;
-      pointer-events: none;
-    }
-    @keyframes heroFloat {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      33% { transform: translate(30px, -30px) scale(1.05); }
-      66% { transform: translate(-20px, 20px) scale(0.95); }
-    }
-    .hero-modern .hero-content {
-      position: relative; z-index: 1;
-    }
-    .hero-modern .hero-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(212,175,55,0.15);
-      border: 1px solid rgba(212,175,55,0.3);
-      padding: 6px 16px;
-      border-radius: 50px;
-      font-size: 12px; font-weight: 600; color: var(--secondary);
-      margin-bottom: 24px;
-      backdrop-filter: blur(10px);
-    }
-    .hero-modern h1 {
-      font-size: 3.5rem; font-weight: 900;
-      line-height: 1.1; margin-bottom: 16px;
-      letter-spacing: -1.5px;
-      background: linear-gradient(135deg, #fff 40%, var(--secondary) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .hero-modern h1 .no-gradient {
-      -webkit-text-fill-color: #fff;
-      background: none;
-    }
-    .hero-modern .hero-sub {
-      font-size: 1.15rem; opacity: 0.9;
-      max-width: 560px; margin: 0 auto 32px;
-      line-height: 1.8;
-    }
-    .hero-modern .hero-cta {
-      display: inline-flex;
-      align-items: center; gap: 8px;
-      padding: 14px 36px;
-      background: linear-gradient(135deg, var(--secondary), #f5d06a);
-      color: #0A2342;
-      font-weight: 700; font-size: 15px;
-      border-radius: 50px;
-      text-decoration: none;
-      transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
-      box-shadow: 0 8px 30px rgba(212,175,55,0.3);
-    }
-    .hero-modern .hero-cta:hover {
-      transform: translateY(-3px) scale(1.02);
-      box-shadow: 0 12px 40px rgba(212,175,55,0.4);
-    }
-    .hero-modern .hero-cta:active {
-      transform: translateY(0) scale(0.98);
-    }
-    .hero-modern .hero-stats {
-      display: flex;
-      justify-content: center;
-      gap: 40px;
-      margin-top: 48px;
-    }
-    .hero-modern .hero-stats .hs-item {
-      text-align: center;
-    }
-    .hero-modern .hero-stats .hs-num {
-      font-size: 1.8rem;
-      font-weight: 900;
-      color: var(--secondary);
-      line-height: 1;
-    }
-    .hero-modern .hero-stats .hs-label {
-      font-size: 12px;
-      opacity: 0.7;
-      margin-top: 4px;
-    }
+
 
     /* ─── STORY GRID ─── */
     .story-grid-modern {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 28px;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 14px;
       margin-bottom: 40px;
     }
 
     /* ─── STORY CARDS ─── */
     .story-card-modern {
       background: var(--card-bg);
-      border-radius: 20px;
+      border-radius: 14px;
       overflow: hidden;
       box-shadow: var(--shadow);
-      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       border: 1px solid var(--border);
       position: relative;
       cursor: pointer;
-      animation: cardFadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+      animation: cardFadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
     }
-    .story-card-modern:nth-child(2) { animation-delay: 0.08s; }
-    .story-card-modern:nth-child(3) { animation-delay: 0.16s; }
-    .story-card-modern:nth-child(4) { animation-delay: 0.24s; }
-    .story-card-modern:nth-child(5) { animation-delay: 0.32s; }
-    .story-card-modern:nth-child(6) { animation-delay: 0.40s; }
-    .story-card-modern:nth-child(7) { animation-delay: 0.48s; }
-    .story-card-modern:nth-child(8) { animation-delay: 0.56s; }
-    .story-card-modern:nth-child(9) { animation-delay: 0.64s; }
-    .story-card-modern:nth-child(10) { animation-delay: 0.72s; }
+    .story-card-modern:nth-child(2) { animation-delay: 0.06s; }
+    .story-card-modern:nth-child(3) { animation-delay: 0.12s; }
+    .story-card-modern:nth-child(4) { animation-delay: 0.18s; }
+    .story-card-modern:nth-child(5) { animation-delay: 0.24s; }
+    .story-card-modern:nth-child(6) { animation-delay: 0.30s; }
     @keyframes cardFadeIn {
-      from { opacity: 0; transform: translateY(30px); }
+      from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .story-card-modern::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: 20px;
-      padding: 2px;
-      background: linear-gradient(135deg, transparent, transparent, transparent);
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      pointer-events: none;
-      transition: all 0.5s ease;
-      z-index: 1;
-    }
-    .story-card-modern:hover::before {
-      background: linear-gradient(135deg, var(--secondary), transparent, var(--secondary));
-    }
     .story-card-modern:hover {
-      transform: translateY(-10px) scale(1.02);
-      box-shadow: 0 20px 60px rgba(212,175,55,0.12), var(--shadow-hover);
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: 0 12px 40px rgba(212,175,55,0.1), var(--shadow-hover);
       border-color: rgba(212,175,55,0.3);
     }
     .story-card-modern .card-badge {
-      position: absolute; top: 14px; right: 14px; z-index: 3;
-      display: flex; flex-direction: column; gap: 6px; align-items: flex-end;
+      position: absolute; top: 8px; right: 8px; z-index: 3;
+      display: flex; flex-direction: column; gap: 4px; align-items: flex-end;
     }
     .story-card-modern .card-badge span {
       display: inline-block;
-      padding: 4px 12px;
+      padding: 2px 8px;
       border-radius: 50px;
-      font-size: 10px; font-weight: 700;
+      font-size: 9px; font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
     }
     .story-card-modern .card-badge .badge-new {
       background: linear-gradient(135deg, #D4AF37, #f5d06a);
       color: #0A2342;
-      box-shadow: 0 4px 12px rgba(212,175,55,0.3);
+      box-shadow: 0 2px 8px rgba(212,175,55,0.3);
     }
     .story-card-modern .card-badge .badge-series {
       background: linear-gradient(135deg, #4fc3f7, #29b6f6);
@@ -320,50 +191,42 @@
     }
     .story-card-modern .card-cover {
       width: 100%;
-      aspect-ratio: 2/3;
+      aspect-ratio: 3/4;
       object-fit: cover;
       background: var(--bg-alt);
-      transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .story-card-modern:hover .card-cover { transform: scale(1.08); }
+    .story-card-modern:hover .card-cover { transform: scale(1.05); }
     .story-card-modern .card-body {
-      padding: 22px 24px 24px;
+      padding: 12px 14px 14px;
       position: relative;
       z-index: 2;
     }
     .story-card-modern .card-title {
-      font-size: 1.15rem; font-weight: 700;
-      line-height: 1.35; margin-bottom: 8px;
+      font-size: 0.9rem; font-weight: 700;
+      line-height: 1.3; margin-bottom: 4px;
       color: var(--text);
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
     }
-    .story-card-modern .card-meta {
-      display: flex; align-items: center; gap: 12px;
-      font-size: 12px; color: var(--text-light); margin-bottom: 10px;
-    }
     .story-card-modern .card-desc {
-      font-size: 13px; color: var(--text-light);
-      margin-bottom: 18px;
+      font-size: 11px; color: var(--text-light);
+      margin-bottom: 10px;
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-      line-height: 1.7;
+      line-height: 1.5;
     }
     .story-card-modern .card-foot {
       display: flex; align-items: center; justify-content: space-between;
-      padding-top: 16px;
+      padding-top: 8px;
       border-top: 1px solid var(--border);
     }
     .story-card-modern .card-author {
-      font-size: 12px; color: var(--text-light);
+      font-size: 10px; color: var(--text-light);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%;
     }
     .story-card-modern .card-author strong { color: var(--secondary); }
-    .story-card-modern .card-read-btn {
-      font-size: 12px; font-weight: 700;
-      color: var(--secondary);
-      text-decoration: none;
-      display: inline-flex; align-items: center; gap: 4px;
-      transition: gap 0.3s ease;
+    .story-card-modern .card-views {
+      font-size: 11px; font-weight: 600; color: var(--text-light); white-space: nowrap;
     }
-    .story-card-modern .card-read-btn:hover { gap: 8px; }
 
     /* ─── SECTION TITLE ─── */
     .section-modern {
@@ -666,11 +529,6 @@
 
     /* ─── RESPONSIVE ─── */
     @media(max-width: 768px) {
-      .hero-modern { padding: 60px 0 70px; }
-      .hero-modern h1 { font-size: 2.2rem; }
-      .hero-modern .hero-sub { font-size: 1rem; }
-      .hero-modern .hero-stats { gap: 24px; margin-top: 32px; }
-      .hero-modern .hero-stats .hs-num { font-size: 1.4rem; }
       .detail-modern .detail-header { padding: 40px 0 40px; }
       .detail-modern .detail-header .dh-inner { flex-direction: column; align-items: center; text-align: center; }
       .detail-modern .detail-header .dh-cover { width: 160px; height: 240px; }
@@ -679,20 +537,15 @@
       .chapter-nav-modern { flex-direction: column; }
       .btn-chapter-modern { justify-content: center; }
       .comments-modern .cm-form .cm-input-row { flex-direction: column; }
-      .story-grid-modern { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+      .story-grid-modern { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
       .section-modern .section-head h2 { font-size: 1.3rem; }
       .section-modern .section-head h2::after { width: 40px; }
       .notif-toast { max-width: 320px; right: 16px; top: 16px; }
     }
     @media(max-width: 480px) {
-      .hero-modern { padding: 40px 0 50px; }
-      .hero-modern h1 { font-size: 1.6rem; }
-      .hero-modern .hero-sub { font-size: 0.95rem; margin-bottom: 24px; }
-      .hero-modern .hero-cta { padding: 12px 28px; font-size: 14px; }
-      .hero-modern .hero-stats { gap: 16px; margin-top: 24px; }
-      .hero-modern .hero-stats .hs-num { font-size: 1.2rem; }
-      .story-grid-modern { grid-template-columns: 1fr; gap: 16px; }
-      .story-card-modern .card-body { padding: 18px 20px 20px; }
+      .story-grid-modern { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+      .story-card-modern .card-body { padding: 10px 12px 12px; }
+      .story-card-modern .card-title { font-size: 0.85rem; }
       .detail-modern .detail-header { padding: 30px 0 30px; }
       .detail-modern .detail-body { padding: 24px 16px 40px; }
       .detail-modern .detail-body .story-content { font-size: 1.05rem; }

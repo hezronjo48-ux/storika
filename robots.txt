@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://storika.co.tz/sitemap.xml
