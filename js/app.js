@@ -1,22 +1,31 @@
-const API = {
-  base: '/api',
-  async get(url) { const r = await fetch(this.base + url); if (!r.ok) throw new Error(await r.text()); return r.json(); },
-  async post(url, body) { const r = await fetch(this.base + url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) }); if (!r.ok) throw new Error(await r.text()); return r.json(); },
-  async put(url, body) { const r = await fetch(this.base + url, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) }); if (!r.ok) throw new Error(await r.text()); return r.json(); },
-  async del(url) { const r = await fetch(this.base + url, { method:'DELETE' }); if (!r.ok) throw new Error(await r.text()); return r.json(); },
+function safeJSON(key) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch(e) { return null; } }
 
-  async getStories() { return this.get('/stories'); },
-  async getStory(id) { return this.get('/stories/' + id); },
-  async addView(id) { return this.post('/stories/' + id + '/view', {}); },
-  async getEpisodes(storyId) { return this.get('/episodes/' + storyId); },
-  async getComments(storyId) { return this.get('/comments/' + storyId); },
-  async addComment(storyId, comment) { return this.post('/comments/' + storyId, comment); }
+const API = {
+  async getStories() { return DB.getStories(); },
+  async getStory(id) { return DB.getStories().find(s => s.id === id) || null; },
+  async addView(id) {
+    const stories = DB.getStories();
+    const s = stories.find(st => st.id === id);
+    if (s) { s.views = (s.views || 0) + 1; DB.setStories(stories); return { views: s.views }; }
+    return { views: 0 };
+  },
+  async getEpisodes(storyId) { return DB.getEpisodes(storyId); },
+  async getComments(storyId) { return DB.getComments(storyId); },
+  async addComment(storyId, comment) {
+    const comments = DB.getComments(storyId);
+    const saved = { id: DB.getNextId(), storyId, ...comment, createdAt: new Date().toISOString() };
+    comments.push(saved);
+    DB.setComments(storyId, comments);
+    return saved;
+  }
 };
 
 const DB = {
-  getStories() { return JSON.parse(localStorage.getItem('storika_stories') || '[]'); },
+  getStories() { return safeJSON('storika_stories') || []; },
   setStories(s) { localStorage.setItem('storika_stories', JSON.stringify(s)); },
-  getComments(storyId) { return JSON.parse(localStorage.getItem('storika_comments_' + storyId) || '[]'); },
+  getEpisodes(storyId) { return safeJSON('storika_episodes_' + storyId) || []; },
+  setEpisodes(storyId, eps) { localStorage.setItem('storika_episodes_' + storyId, JSON.stringify(eps)); },
+  getComments(storyId) { return safeJSON('storika_comments_' + storyId) || []; },
   setComments(storyId, c) { localStorage.setItem('storika_comments_' + storyId, JSON.stringify(c)); },
   getNextId() { return Date.now(); }
 };
@@ -136,7 +145,7 @@ function getDefaultCover() {
 }
 
 async function loadStories() {
-  try { const s = await API.getStories(); if (s && s.length > 0) DB.setStories(s); return s && s.length > 0 ? s : DB.getStories(); } catch(e) { return DB.getStories(); }
+  return DB.getStories();
 }
 
 async function renderHome() {
@@ -159,7 +168,7 @@ async function renderHome() {
 }
 
 async function getEpisodes(storyId) {
-  try { return await API.getEpisodes(storyId); } catch(e) { try { return JSON.parse(localStorage.getItem('storika_episodes_' + storyId) || '[]'); } catch(ex) { return []; } }
+  return await API.getEpisodes(storyId);
 }
 
 async function renderStory(id) {
@@ -168,12 +177,11 @@ async function renderStory(id) {
   if (!story) { navigate('#/'); return; }
   setTitle(story.title);
 
-  // Increment views via API
-  try { const v = await API.addView(id); story.views = v.views; } catch(e) { story.views = (story.views || 0) + 1; }
+  const v = await API.addView(id);
+  story.views = v.views;
   DB.setStories(stories);
 
-  let comments = [];
-  try { comments = await API.getComments(id); } catch(e) { comments = DB.getComments(id); }
+  const comments = await API.getComments(id);
   const cover = story.coverImage || getDefaultCover();
   const episodes = story.type === 'series' ? await getEpisodes(id) : [];
 
@@ -274,17 +282,8 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
     const name = document.getElementById('commentName').value.trim() || 'Msomaji';
     const text = document.getElementById('commentText').value.trim();
     if (!text) return;
-    let saved;
-    try {
-      saved = await API.addComment(id, { name, comment: text });
-    } catch(ex) {
-      saved = { id: DB.getNextId(), storyId: id, name, comment: text, createdAt: new Date().toISOString() };
-      const existing = DB.getComments(id);
-      existing.unshift(saved);
-      DB.setComments(id, existing);
-    }
-    let comments = [];
-    try { comments = await API.getComments(id); } catch(ex) { comments = DB.getComments(id); }
+    await API.addComment(id, { name, comment: text });
+    const comments = await API.getComments(id);
     document.getElementById('commentText').value = '';
     const list = document.getElementById('commentsList');
     list.innerHTML = comments.map(c => `
