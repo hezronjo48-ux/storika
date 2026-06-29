@@ -1,33 +1,22 @@
-function safeJSON(key) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch(e) { return null; } }
+const API_BASE = 'api.php';
+
+async function api(action, data = {}) {
+  const url = API_BASE + '?action=' + action;
+  const opts = { method: 'POST', headers: { 'Content-Type': 'application/json' } };
+  opts.body = JSON.stringify(data);
+  const r = await fetch(url, opts);
+  if (!r.ok) { const e = await r.json().catch(() => ({ error: r.statusText })); throw new Error(e.error || 'Request failed'); }
+  return r.json();
+}
 
 const API = {
-  async getStories() { return DB.getStories(); },
-  async getStory(id) { return DB.getStories().find(s => s.id === id) || null; },
-  async addView(id) {
-    const stories = DB.getStories();
-    const s = stories.find(st => st.id === id);
-    if (s) { s.views = (s.views || 0) + 1; DB.setStories(stories); return { views: s.views }; }
-    return { views: 0 };
-  },
-  async getEpisodes(storyId) { return DB.getEpisodes(storyId); },
-  async getComments(storyId) { return DB.getComments(storyId); },
-  async addComment(storyId, comment) {
-    const comments = DB.getComments(storyId);
-    const saved = { id: DB.getNextId(), storyId, ...comment, createdAt: new Date().toISOString() };
-    comments.push(saved);
-    DB.setComments(storyId, comments);
-    return saved;
-  }
-};
-
-const DB = {
-  getStories() { return safeJSON('storika_stories') || []; },
-  setStories(s) { localStorage.setItem('storika_stories', JSON.stringify(s)); },
-  getEpisodes(storyId) { return safeJSON('storika_episodes_' + storyId) || []; },
-  setEpisodes(storyId, eps) { localStorage.setItem('storika_episodes_' + storyId, JSON.stringify(eps)); },
-  getComments(storyId) { return safeJSON('storika_comments_' + storyId) || []; },
-  setComments(storyId, c) { localStorage.setItem('storika_comments_' + storyId, JSON.stringify(c)); },
-  getNextId() { return Date.now(); }
+  async getStories() { const r = await api('list-stories'); return Array.isArray(r) ? r : []; },
+  async getStory(id) { return api('get-story', { id }); },
+  async addView(id) { return api('increment-view', { id }); },
+  async getEpisodes(storyId) { const r = await api('list-episodes', { story_id: storyId }); return Array.isArray(r) ? r : []; },
+  async getComments(storyId) { const r = await api('list-comments', { story_id: storyId }); return Array.isArray(r) ? r : []; },
+  async addComment(storyId, comment) { return api('save-comment', { story_id: storyId, ...comment }); },
+  async checkMaintenance() { return api('get-settings'); }
 };
 
 function showToast(msg, type) {
@@ -39,22 +28,18 @@ function showToast(msg, type) {
 }
 
 // ====== MAINTENANCE MODE CHECK ======
-(function checkMaintenance() {
+(async function checkMaintenance() {
   const overlay = document.getElementById('maintenanceOverlay');
   if (!overlay) return;
   const bypass = new URLSearchParams(window.location.search).get('maintenance_bypass');
-  overlay.style.display = (localStorage.getItem('storika_maintenance') === 'true' && bypass !== '1') ? 'flex' : 'none';
+  if (bypass === '1') { overlay.style.display = 'none'; return; }
+  try {
+    const r = await API.checkMaintenance();
+    const settings = Array.isArray(r) ? r : [];
+    const maintenance = settings.find(s => s.setting_key === 'maintenance_mode');
+    overlay.style.display = (maintenance && maintenance.setting_value === 'true') ? 'flex' : 'none';
+  } catch(_) { overlay.style.display = 'none'; }
 })();
-
-// Listen for maintenance changes from other tabs
-window.addEventListener('storage', (e) => {
-  if (e.key === 'storika_maintenance') {
-    const overlay = document.getElementById('maintenanceOverlay');
-    if (!overlay) return;
-    const bypass = new URLSearchParams(window.location.search).get('maintenance_bypass');
-    overlay.style.display = (e.newValue === 'true' && bypass !== '1') ? 'flex' : 'none';
-  }
-});
 
 (function initTheme() {
   const saved = localStorage.getItem('storika-theme');
@@ -145,7 +130,7 @@ function getDefaultCover() {
 }
 
 async function loadStories() {
-  return DB.getStories();
+  return await API.getStories();
 }
 
 async function renderHome() {
@@ -179,7 +164,6 @@ async function renderStory(id) {
 
   const v = await API.addView(id);
   story.views = v.views;
-  DB.setStories(stories);
 
   const comments = await API.getComments(id);
   const cover = story.coverImage || getDefaultCover();
@@ -282,20 +266,20 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
     const name = document.getElementById('commentName').value.trim() || 'Msomaji';
     const text = document.getElementById('commentText').value.trim();
     if (!text) return;
-    await API.addComment(id, { name, comment: text });
+    await API.addComment(id, { author: name, content: text });
     const comments = await API.getComments(id);
     document.getElementById('commentText').value = '';
     const list = document.getElementById('commentsList');
     list.innerHTML = comments.map(c => `
       <div class="cm-item">
         <div class="cm-author">
-          <div class="cm-avatar">${escHtml((c.name||'M').charAt(0).toUpperCase())}</div>
+          <div class="cm-avatar">${escHtml((c.author||'M').charAt(0).toUpperCase())}</div>
           <div>
-            <div class="cm-name">${escHtml(c.name||'Msomaji')}</div>
+            <div class="cm-name">${escHtml(c.author||'Msomaji')}</div>
             <div class="cm-date">${new Date(c.createdAt).toLocaleDateString('sw-TZ')}</div>
           </div>
         </div>
-        <div class="cm-text">${escHtml(c.comment)}</div>
+        <div class="cm-text">${escHtml(c.content)}</div>
       </div>`).join('');
     showToast('Maoni yametumwa!', 'success');
     localStorage.setItem('storika_notify_comment', JSON.stringify({ name, comment: text, storyId: id, storyTitle: story.title, time: Date.now() }));
@@ -312,8 +296,9 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
     clearTimeout(input._debounce);
     const q = input.value.trim().toLowerCase();
     if (!q) { results.classList.remove('active'); results.innerHTML = ''; return; }
-    input._debounce = setTimeout(() => {
-      const stories = DB.getStories().filter(s => s.title.toLowerCase().includes(q)).slice(0, 6);
+    input._debounce = setTimeout(async () => {
+      const allStories = await API.getStories();
+      const stories = (Array.isArray(allStories) ? allStories : []).filter(s => s.title.toLowerCase().includes(q)).slice(0, 6);
       if (!stories.length) {
         results.innerHTML = '<div style="padding:16px;color:var(--text-light);text-align:center;">Hakuna hadithi zilizopatikana</div>';
         results.classList.add('active'); return;

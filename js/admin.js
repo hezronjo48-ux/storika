@@ -1,95 +1,41 @@
-// ====== STORAGE (localStorage) ======
-const API = {
-  async getStories() { return DB.getStories(); },
-  async getStory(id) { return DB.getStories().find(s => s.id === id) || null; },
-  async addStory(story) {
-    const id = DB.getNextId();
-    const saved = { id, ...story, createdAt: new Date().toISOString() };
-    const stories = DB.getStories();
-    stories.unshift(saved);
-    DB.setStories(stories);
-    return saved;
-  },
-  async updateStory(id, updates) {
-    const stories = DB.getStories();
-    const idx = stories.findIndex(s => s.id === id);
-    if (idx === -1) return null;
-    stories[idx] = { ...stories[idx], ...updates };
-    DB.setStories(stories);
-    return stories[idx];
-  },
-  async deleteStory(id) {
-    let stories = DB.getStories().filter(s => s.id !== id);
-    DB.setStories(stories);
-    return { success: true };
-  },
-  async addView(id) {
-    const stories = DB.getStories();
-    const s = stories.find(st => st.id === id);
-    if (s) { s.views = (s.views || 0) + 1; DB.setStories(stories); return { views: s.views }; }
-    return { views: 0 };
-  },
-  async getEpisodes(storyId) { return DB.getEpisodes(storyId); },
-  async addEpisode(storyId, ep) {
-    const eps = DB.getEpisodes(storyId);
-    const saved = { id: DB.getNextId(), storyId, ...ep, createdAt: new Date().toISOString() };
-    eps.push(saved);
-    DB.setEpisodes(storyId, eps);
-    return saved;
-  },
-  async updateEpisode(storyId, epId, updates) {
-    const eps = DB.getEpisodes(storyId);
-    const idx = eps.findIndex(e => e.id === epId);
-    if (idx === -1) return null;
-    eps[idx] = { ...eps[idx], ...updates };
-    DB.setEpisodes(storyId, eps);
-    return eps[idx];
-  },
-  async deleteEpisode(storyId, epId) {
-    let eps = DB.getEpisodes(storyId).filter(e => e.id !== epId);
-    eps = eps.map((e, i) => { e.number = i + 1; return e; });
-    DB.setEpisodes(storyId, eps);
-    return { success: true };
-  },
-  async getComments(storyId) { return DB.getComments(storyId); },
-  async addComment(storyId, comment) {
-    const comments = DB.getComments(storyId);
-    const saved = { id: DB.getNextId(), storyId, ...comment, createdAt: new Date().toISOString() };
-    comments.push(saved);
-    DB.setComments(storyId, comments);
-    return saved;
-  },
-  async deleteComment(storyId, commentId) {
-    const comments = DB.getComments(storyId).filter(c => c.id !== commentId);
-    DB.setComments(storyId, comments);
-    return { success: true };
-  },
-  async getAllComments(stories) { return DB.getAllComments(); }
-};
+// ====== API (MySQL via PHP) ======
+let API_TOKEN = localStorage.getItem('storika_token');
+const API_BASE = 'api.php';
 
-// ====== DATABASE (localStorage fallback) ======
-function safeJSON(key) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch(e) { return null; } }
-const DB = {
-  getUsers() { return safeJSON('storika_users') || []; },
-  setUsers(u) { localStorage.setItem('storika_users', JSON.stringify(u)); },
-  getStories() { return safeJSON('storika_stories') || []; },
-  setStories(s) { localStorage.setItem('storika_stories', JSON.stringify(s)); },
-  getComments(storyId) { return safeJSON('storika_comments_' + storyId) || []; },
-  setComments(storyId, c) { localStorage.setItem('storika_comments_' + storyId, JSON.stringify(c)); },
-  getAllComments() {
-    const stories = this.getStories();
-    let all = [];
-    stories.forEach(s => {
-      const cs = this.getComments(s.id);
-      cs.forEach(c => { c.storyTitle = s.title; all.push(c); });
-    });
-    return all.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  },
-  getNextId() { return Date.now(); },
-  getSession() { return localStorage.getItem('storika_session') || null; },
-  setSession(email) { if (email) localStorage.setItem('storika_session', email); else localStorage.removeItem('storika_session'); },
-  getEpisodes(storyId) { return safeJSON('storika_episodes_' + storyId) || []; },
-  setEpisodes(storyId, eps) { localStorage.setItem('storika_episodes_' + storyId, JSON.stringify(eps)); }
+async function api(action, data = {}) {
+  const url = API_BASE + '?action=' + action;
+  const opts = { method: 'POST', headers: { 'Content-Type': 'application/json' } };
+  if (data.token) opts.headers['Authorization'] = 'Bearer ' + data.token;
+  else if (API_TOKEN) opts.headers['Authorization'] = 'Bearer ' + API_TOKEN;
+  opts.body = JSON.stringify(data);
+  const r = await fetch(url, opts);
+  if (!r.ok) { const e = await r.json().catch(() => ({ error: r.statusText })); throw new Error(e.error || 'Request failed'); }
+  return r.json();
+}
+
+const API = {
+  async getStories() { return api('list-stories'); },
+  async getStory(id) { return api('get-story', { id }); },
+  async addStory(story) { return api('save-story', { ...story }); },
+  async updateStory(id, updates) { return api('save-story', { id, ...updates }); },
+  async deleteStory(id) { return api('delete-story', { id }); },
+  async addView(id) { return api('increment-view', { id }); },
+  async getEpisodes(storyId) { return api('list-episodes', { story_id: storyId }); },
+  async addEpisode(storyId, ep) { return api('save-episode', { story_id: storyId, ...ep }); },
+  async updateEpisode(storyId, epId, updates) { return api('save-episode', { id: epId, story_id: storyId, ...updates }); },
+  async deleteEpisode(storyId, epId) { return api('delete-episode', { id: epId }); },
+  async getComments(storyId) { return api('list-comments', { story_id: storyId }); },
+  async addComment(storyId, comment) { return api('save-comment', { story_id: storyId, ...comment }); },
+  async deleteComment(storyId, commentId) { return api('delete-comment', { id: commentId }); },
+  async getAllComments(stories) { return api('list-comments-all'); },
+  async login(email, password) { const r = await api('login', { email, password }); if (r.token) { API_TOKEN = r.token; localStorage.setItem('storika_token', r.token); } return r; },
+  async logout() { await api('logout', { token: API_TOKEN }); API_TOKEN = null; localStorage.removeItem('storika_token'); },
+  async checkAuth() { return api('check-auth', { token: API_TOKEN }); },
+  async changePassword(oldPassword, newPassword) { return api('change-password', { token: API_TOKEN, oldPassword, newPassword }); },
+  async getSettings() { return api('get-settings'); },
+  async saveSetting(key, value) { return api('save-setting', { token: API_TOKEN, key, value }); },
+  async seed() { return api('seed', { token: API_TOKEN }); },
+  async reset() { return api('reset', { token: API_TOKEN }); }
 };
 
 // ====== TOAST ======
@@ -131,17 +77,9 @@ document.getElementById('sidebarOverlay').addEventListener('click', () => {
 });
 
 // ====== AUTH ======
-function seedDefaultAdmin() {
-  let users = DB.getUsers();
-  const exists = users.findIndex(u => u.email === 'admin@storika.co.tz');
-  const admin = { name: 'Admin', email: 'admin@storika.co.tz', password: hashPass('admin123'), role: 'admin', createdAt: new Date().toISOString() };
-  if (exists >= 0) { users[exists] = admin; }
-  else { users.push(admin); }
-  DB.setUsers(users);
-}
-seedDefaultAdmin();
 let editingStoryId = null;
 let _defCoverCache = null;
+let _currentUser = null;
 function defCover() {
   if (!_defCoverCache) {
     _defCoverCache = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22200%22%3E%3Crect width=%22400%22 height=%22200%22 fill=%22%230A2342%22/%3E%3Ctext x=%22200%22 y=%22110%22 font-family=%22sans-serif%22 font-size=%2240%22 text-anchor=%22middle%22 fill=%22%23D4AF37%22%3E📖%3C/text%3E%3C/svg%3E';
@@ -156,30 +94,23 @@ function escHtml(s) {
 }
 
 async function checkAuth() {
-  const session = DB.getSession();
-  if (session) {
-    const users = DB.getUsers();
-    const user = users.find(u => u.email === session);
-    if (user) {
+  try {
+    const r = await API.checkAuth();
+    if (r.authenticated && r.user) {
+      _currentUser = r.user;
       document.getElementById('authSection').style.display = 'none';
       document.getElementById('dashboardSection').style.display = 'block';
-      document.getElementById('sidebarName').textContent = user.name;
-      document.getElementById('sidebarAvatar').textContent = user.name.charAt(0).toUpperCase();
+      document.getElementById('sidebarName').textContent = r.user.name;
+      document.getElementById('sidebarAvatar').textContent = r.user.name.charAt(0).toUpperCase();
       await renderDashboard();
       return;
     }
-  }
+  } catch (_) {}
   document.getElementById('authSection').style.display = 'block';
   document.getElementById('dashboardSection').style.display = 'none';
 }
 
-function hashPass(p) {
-  let h = 0;
-  for (let i = 0; i < p.length; i++) { const c = p.charCodeAt(i); h = ((h << 5) - h) + c; h |= 0; }
-  return 'h' + Math.abs(h).toString(16);
-}
-
-document.getElementById('loginForm').addEventListener('submit', (e) => {
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
@@ -187,54 +118,20 @@ document.getElementById('loginForm').addEventListener('submit', (e) => {
   const success = document.getElementById('loginSuccess');
   error.style.display = 'none';
   success.style.display = 'none';
-
-  const users = DB.getUsers();
-  const user = users.find(u => u.email === email && u.password === hashPass(password));
-  if (!user) {
+  try {
+    await API.login(email, password);
+    success.textContent = 'Umeingia kwa mafanikio!';
+    success.style.display = 'block';
+    setTimeout(checkAuth, 300);
+  } catch (err) {
     error.textContent = 'Barua pepe au nywila si sahihi';
     error.style.display = 'block';
-    return;
   }
-  DB.setSession(email);
-  success.textContent = 'Umeingia kwa mafanikio!';
-  success.style.display = 'block';
-  setTimeout(checkAuth, 500);
 });
 
-(function() {
-  const regForm = document.getElementById('registerForm');
-  if (!regForm) return;
-  regForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = document.getElementById('regName').value.trim();
-    const email = document.getElementById('regEmail').value.trim();
-    const password = document.getElementById('regPassword').value;
-    const error = document.getElementById('registerError');
-    const success = document.getElementById('registerSuccess');
-    error.style.display = 'none';
-    success.style.display = 'none';
-    if (!name || !email || !password) {
-      error.textContent = 'Tafadhali jaza taarifa zote';
-      error.style.display = 'block';
-      return;
-    }
-    let users = DB.getUsers();
-    if (users.find(u => u.email === email)) {
-      error.textContent = 'Barua pepe hii tayari imesajiliwa';
-      error.style.display = 'block';
-      return;
-    }
-    const role = users.length === 0 ? 'admin' : 'user';
-    users.push({ name, email, password: hashPass(password), role, createdAt: new Date().toISOString() });
-    DB.setUsers(users);
-    success.textContent = 'Umesajiliwa kwa mafanikio! Sasa unaweza kuingia.';
-    success.style.display = 'block';
-    regForm.reset();
-  });
-})();
-
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  DB.setSession(null);
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await API.logout();
+  _currentUser = null;
   checkAuth();
   showToast('Umetoka!', 'success');
   document.getElementById('adminSidebar').classList.remove('open');
@@ -256,7 +153,7 @@ document.getElementById('cancelChangePassBtn').addEventListener('click', () => {
 document.getElementById('changePassModal').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) document.getElementById('changePassModal').classList.remove('active');
 });
-document.getElementById('saveNewPassBtn').addEventListener('click', () => {
+document.getElementById('saveNewPassBtn').addEventListener('click', async () => {
   const oldPass = document.getElementById('oldPassword').value;
   const newPass = document.getElementById('newPassword').value;
   const confirmPass = document.getElementById('confirmPassword').value;
@@ -277,27 +174,24 @@ document.getElementById('saveNewPassBtn').addEventListener('click', () => {
     error.textContent = 'Nywila mpya hailingani';
     error.style.display = 'block'; return;
   }
-
-  const email = DB.getSession();
-  if (!email) { error.textContent = 'Haujaingia kwenye akaunti'; error.style.display = 'block'; return; }
-  const users = DB.getUsers();
-  const user = users.find(u => u.email === email);
-  if (!user) { error.textContent = 'Akaunti haipatikani'; error.style.display = 'block'; return; }
-  if (user.password !== hashPass(oldPass)) {
-    error.textContent = 'Nywila ya sasa si sahihi';
-    error.style.display = 'block'; return;
+  try {
+    await API.changePassword(oldPass, newPass);
+    success.textContent = 'Nywila imebadilishwa kwa mafanikio!';
+    success.style.display = 'block';
+    document.getElementById('oldPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+    setTimeout(() => document.getElementById('changePassModal').classList.remove('active'), 1500);
+  } catch (err) {
+    error.textContent = err.message || 'Nywila ya sasa si sahihi';
+    error.style.display = 'block';
   }
-
-  user.password = hashPass(newPass);
-  DB.setUsers(users);
-  success.textContent = 'Nywila imebadilishwa kwa mafanikio!';
-  success.style.display = 'block';
-  setTimeout(() => document.getElementById('changePassModal').classList.remove('active'), 1500);
 });
 
 // ====== DASHBOARD ======
-function loadStoriesFromDB() {
-  return DB.getStories();
+async function loadStoriesFromDB() {
+  const r = await API.getStories();
+  return Array.isArray(r) ? r : (r.stories || []);
 }
 
 function renderStoriesTable(stories) {
@@ -315,7 +209,7 @@ function renderStoriesTable(stories) {
         <td style="font-size:13px;color:var(--text-light);">${s.createdAt ? new Date(s.createdAt).toLocaleDateString('sw-TZ') : '-'}</td>
         <td><div class="actions">
           <button class="btn-sm-modern edit" data-edit="${s.id}">Hariri</button>
-          ${s.type === 'series' ? `<button class="btn-sm-modern episodes" data-episodes="${s.id}">Episodes (${DB.getEpisodes(s.id).length})</button>` : ''}
+          ${s.type === 'series' ? `<button class="btn-sm-modern episodes" data-episodes="${s.id}">Episodes</button>` : ''}
           <button class="btn-sm-modern delete" data-del="${s.id}">Futa</button>
         </div></td>
       </tr>`).join('')}
@@ -344,7 +238,7 @@ function renderStoriesTable(stories) {
 }
 
 async function renderDashboard() {
-  const stories = loadStoriesFromDB();
+  const stories = await loadStoriesFromDB();
   const totalViews = stories.reduce((sum, s) => sum + (s.views || 0), 0);
 
   document.getElementById('statsSection').innerHTML = `
@@ -402,15 +296,15 @@ async function renderDashboard() {
                 <div class="comment-card" style="border-radius:0;border:none;border-bottom:1px solid var(--border);box-shadow:none;margin:0;">
                   <div class="comment-head">
                     <div class="comment-author">
-                      <div class="comment-avatar">${escHtml(c.name.charAt(0).toUpperCase())}</div>
+                      <div class="comment-avatar">${escHtml(c.author.charAt(0).toUpperCase())}</div>
                       <div>
-                        <div class="comment-name">${escHtml(c.name)}</div>
+                        <div class="comment-name">${escHtml(c.author)}</div>
                         <div class="comment-story">kwenye ${escHtml(c.storyTitle)}</div>
                       </div>
                     </div>
                     <small style="font-size:12px;color:var(--text-light);">${new Date(c.createdAt).toLocaleDateString('sw-TZ')}</small>
                   </div>
-                  <div class="comment-text">${escHtml(c.comment)}</div>
+                  <div class="comment-text">${escHtml(c.content)}</div>
                   <div class="comment-footer">
                     <span></span>
                     <a href="#" data-del-comment="${c.storyId}|${c.id}" style="color:#dc3545;font-size:12px;font-weight:600;text-decoration:none;">Futa Maoni</a>
@@ -542,11 +436,8 @@ document.getElementById('saveNewStoryBtn').addEventListener('click', async () =>
 
 // ====== EDIT STORY ======
 async function openEditModal(id) {
-  let stories = DB.getStories();
-  let story = stories.find(s => s.id === id);
-  if (!story) {
-    try { story = await API.getStory(id); } catch(e) { return; }
-  }
+  let story;
+  try { story = await API.getStory(id); } catch(e) { return; }
   if (!story) return;
   editingStoryId = id;
   _editCoverDataURL = null;
@@ -629,11 +520,8 @@ var _episodesStoryId = null;
 
 async function openEpisodesModal(storyId) {
   _episodesStoryId = storyId;
-  let stories = DB.getStories();
-  let story = stories.find(s => s.id === storyId);
-  if (!story) {
-    try { story = await API.getStory(storyId); } catch(e) { return; }
-  }
+  let story;
+  try { story = await API.getStory(storyId); } catch(e) { return; }
   if (!story) return;
   document.getElementById('episodesModalTitle').textContent = 'Episodes - ' + story.title;
   document.getElementById('newEpisodeTitle').value = '';
@@ -768,25 +656,30 @@ const maintenanceToggleLabel = document.getElementById('maintenanceToggleLabel')
 const maintenanceCard = document.getElementById('maintenanceSection');
 const viewSiteBtn = document.getElementById('viewSiteBtn');
 
-function updateMaintenanceUI() {
-  const isOn = localStorage.getItem('storika_maintenance') === 'true';
-  maintenanceToggle.checked = isOn;
-  if (isOn) {
-    maintenanceStatusText.textContent = 'Tovuti iko kwenye matengenezo - watumiaji hawawezi kufikia chochote';
-    maintenanceToggleLabel.textContent = 'Zima Matengenezo';
-    maintenanceCard.classList.add('maintenance-on');
-    viewSiteBtn.style.display = 'inline-flex';
-  } else {
-    maintenanceStatusText.textContent = 'Tovuti inafanya kazi kwa kawaida';
-    maintenanceToggleLabel.textContent = 'Washa Matengenezo';
-    maintenanceCard.classList.remove('maintenance-on');
-    viewSiteBtn.style.display = 'none';
-  }
+async function updateMaintenanceUI() {
+  try {
+    const settings = await API.getSettings();
+    const arr = Array.isArray(settings) ? settings : [];
+    const m = arr.find(s => s.setting_key === 'maintenance_mode');
+    const isOn = m && m.setting_value === 'true';
+    maintenanceToggle.checked = isOn;
+    if (isOn) {
+      maintenanceStatusText.textContent = 'Tovuti iko kwenye matengenezo - watumiaji hawawezi kufikia chochote';
+      maintenanceToggleLabel.textContent = 'Zima Matengenezo';
+      maintenanceCard.classList.add('maintenance-on');
+      viewSiteBtn.style.display = 'inline-flex';
+    } else {
+      maintenanceStatusText.textContent = 'Tovuti inafanya kazi kwa kawaida';
+      maintenanceToggleLabel.textContent = 'Washa Matengenezo';
+      maintenanceCard.classList.remove('maintenance-on');
+      viewSiteBtn.style.display = 'none';
+    }
+  } catch(_) {}
 }
 
-maintenanceToggle.addEventListener('change', () => {
+maintenanceToggle.addEventListener('change', async () => {
   const isOn = maintenanceToggle.checked;
-  localStorage.setItem('storika_maintenance', isOn ? 'true' : 'false');
+  await API.saveSetting('maintenance_mode', isOn ? 'true' : 'false');
   updateMaintenanceUI();
   showToast(isOn ? 'Tovuti iko sasa kwenye matengenezo' : 'Matengenezo yamezimwa, tovuti inafanya kazi', 'success');
 });
