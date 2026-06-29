@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    - /bin/rm -f js/admin.js js/app.js
+    - /bin/cp -r * /home/*/public_html/
