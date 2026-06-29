@@ -133,8 +133,9 @@ document.getElementById('sidebarOverlay').addEventListener('click', () => {
 // ====== AUTH ======
 function seedDefaultAdmin() {
   const users = DB.getUsers();
-  if (users.length === 0) {
-    DB.setUsers([{ name: 'Admin', email: 'admin@storika.co.tz', password: hashPass('admin123'), role: 'admin', createdAt: new Date().toISOString() }]);
+  if (!users.find(u => u.email === 'admin@storika.co.tz')) {
+    users.push({ name: 'Admin', email: 'admin@storika.co.tz', password: hashPass('admin123'), role: 'admin', createdAt: new Date().toISOString() });
+    DB.setUsers(users);
   }
 }
 seedDefaultAdmin();
