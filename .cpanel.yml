@@ -1,5 +1,6 @@
 ---
 deployment:
   tasks:
-    - /bin/rm -f js/admin.js js/app.js
-    - /bin/cp -r * /home/*/public_html/
+    - /bin/cp -r * /home/storika/public_html/
+    - /bin/cp -r css /home/storika/public_html/
+    - /bin/cp -r js /home/storika/public_html/
